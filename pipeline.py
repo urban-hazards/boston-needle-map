@@ -72,11 +72,11 @@ def _api_get(url: str) -> dict | None:
 
 def fetch_needle_records_sql(resource_id: str) -> list[dict]:
     """Use CKAN datastore_search_sql to pull only needle rows (fast)."""
-    type_clauses = " OR ".join(f"\"TYPE\" = '{t}'" for t in NEEDLE_TYPES)
+    type_clauses = " OR ".join(f"\"type\" = '{t}'" for t in NEEDLE_TYPES)
     sql = (
         f'SELECT * FROM "{resource_id}" '
         f'WHERE ({type_clauses}) '
-        f'OR LOWER("TYPE") LIKE \'%needle%\''
+        f'OR LOWER("type") LIKE \'%needle%\''
     )
     url = f"{CKAN_BASE}/datastore_search_sql?sql={urllib.parse.quote(sql)}"
     data = _api_get(url)
@@ -92,7 +92,7 @@ def fetch_needle_records_paged(resource_id: str) -> list[dict]:
         offset = 0
         limit = 5000
         while True:
-            filters = json.dumps({"TYPE": needle_type})
+            filters = json.dumps({"type": needle_type})
             url = (
                 f"{CKAN_BASE}/datastore_search"
                 f"?resource_id={resource_id}"
