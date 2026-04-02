@@ -1,0 +1,12 @@
+.venv/
+tmp/
+docs/
+.git/
+.github/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.playwright-mcp/
+__pycache__/
+*.egg-info/
+tests/
