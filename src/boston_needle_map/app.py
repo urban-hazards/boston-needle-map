@@ -21,7 +21,7 @@ st.markdown(
     """
     <style>
     @media (max-width: 768px) {
-        .block-container { padding-top: 1rem; }
+        .block-container { padding-top: 3.5rem; }
         h1 { font-size: 1.5rem !important; }
     }
     </style>
