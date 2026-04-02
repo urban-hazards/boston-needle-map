@@ -2,7 +2,7 @@
 
 Automated pipeline that pulls needle cleanup requests from Boston's 311 open data portal and publishes an interactive heatmap. Includes a Streamlit dashboard for local data exploration and a static HTML dashboard for GitHub Pages.
 
-**Live site:** https://coffeethencode.github.io/boston-needle-map/
+**Live site:** https://urban-hazards.github.io/boston-needle-map/
 
 ![Pipeline](https://img.shields.io/badge/schedule-monthly-orange)
 ![Data](https://img.shields.io/badge/source-data.boston.gov-blue)
