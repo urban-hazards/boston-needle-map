@@ -13,7 +13,6 @@ RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 --no-create-hom
 
 WORKDIR /app
 COPY --from=builder /app /app
-RUN mkdir -p /app/tmp && chown 1000:1000 /app/tmp
 
 USER appuser
 
