@@ -9,7 +9,7 @@ import StatsOverview from "../components/StatsOverview.astro"
 import ZipCodeList from "../components/ZipCodeList.astro"
 import BaseLayout from "../layouts/BaseLayout.astro"
 import { fetchEncampmentStats, fetchPageStats } from "../lib/api"
-import { formatHour, formatNumber } from "../lib/seo"
+import { formatNumber } from "../lib/seo"
 import "../styles/global.css"
 
 const [stats, encampmentStats] = await Promise.all([fetchPageStats(), fetchEncampmentStats()])
@@ -78,23 +78,22 @@ const description = `Interactive heatmap and analysis of ${formatNumber(stats.to
 			<h2 class="section-title">About This Data</h2>
 			<div class="card about-content">
 				<p>
-					This dashboard analyzes sharps collection requests from Boston's 311 system, the city's
-					non-emergency service request platform. When residents encounter discarded needles or
-					syringes in public spaces, they can report them through 311 for safe collection and
-					disposal by city crews.
+					This dashboard maps publicly available data from Boston's
+					<a href="https://data.boston.gov/dataset/311-service-requests" target="_blank" rel="noopener">311 open data portal</a>.
+					Boston's 311 system is the city's non-emergency service request platform — residents use it to
+					report everything from potholes to graffiti to discarded needles.
 				</p>
 				<p>
-					The data covers <strong>{formatNumber(stats.total)}</strong> verified requests from
-					<strong>{stats.years[0]}</strong> to <strong>{stats.years[stats.years.length - 1]}</strong>.
-					Peak reporting times center around <strong>{formatHour(stats.peak_hour)}</strong>,
-					with <strong>{stats.peak_dow}</strong> being the most active day of the week.
-					The <strong>{stats.peak_hood}</strong> neighborhood consistently reports the
-					highest volume of requests.
+					We currently display two datasets: <strong>sharps collection requests</strong> ({formatNumber(stats.total)} reports)
+					and <strong>encampment reports</strong> ({formatNumber(encampmentStats.total)} reports).
+					These are separate, unrelated complaint types that happen to be available through the same API.
+					We are not implying any correlation or causation between them — we're simply mapping the data
+					as the city provides it. As more geolocated 311 categories become available, we may add them.
 				</p>
 				<p>
 					All data is sourced from the <a href="https://data.boston.gov/dataset/311-service-requests" target="_blank" rel="noopener">City of Boston Open Data Portal</a>
 					via the CKAN API. This project is open source under the MIT license and intended for
-					public health research, harm reduction planning, and community awareness.
+					public health research and community awareness.
 				</p>
 			</div>
 		</section>
