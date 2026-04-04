@@ -6,7 +6,12 @@ import sitemap from "@astrojs/sitemap"
 export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
-  integrations: [react(), sitemap()],
+  integrations: [
+    react(),
+    sitemap({
+      filter: (page) => !page.includes("/health"),
+    }),
+  ],
   site: "https://www.urbanhazardmaps.com",
   server: {
     host: "0.0.0.0",
