@@ -1,0 +1,14 @@
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+COPY src/ src/
+RUN uv sync --frozen --no-dev
+RUN uv run python -m spacy download en_core_web_sm
+
+FROM python:3.12-slim-bookworm
+RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 --no-create-home appuser
+WORKDIR /app
+COPY --from=builder /app /app
+USER appuser
+CMD ["/app/.venv/bin/boston-pipeline", "run"]
