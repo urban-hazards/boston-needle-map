@@ -1,6 +1,6 @@
 # ADR-001: Human Waste Data Pipeline — Storage and Processing Architecture
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-04-04
 **Context:** We need a daily pipeline to detect, classify, and serve human waste reports from Boston 311 data.
 
@@ -22,142 +22,229 @@ We built a spaCy NLP classifier that gets 98% recall / 0% false positives on con
 - Open311 enrichment: ~0.5s per record (rate-limited API)
 - 12 years of historical data available (2015-2026)
 
-## Decision Drivers
+---
 
-- Historical data is crunched once, then served repeatedly — reads >> writes
-- Open311 enrichment is slow (rate-limited) and should not block API requests
-- Redis is already in the stack (Railway, used for CKAN cache)
-- We want classified results to survive Redis evictions and redeploys
-- Daily incremental updates, not full reprocessing
+## Decisions
+
+- **Object storage:** Tigris (Railway-native, S3-compatible)
+- **Pipeline deployment:** Separate Railway service (daily cron), shares Docker base with backend
+- **Hot cache:** Not needed — backend reads from Tigris on startup into memory (same pattern as needle/encampment data). Tigris reads are ~100-200ms for small JSON files, only happens on cold start.
+- **Raw data:** Store in bucket permanently (reproducibility, Open311 descriptions are not re-fetchable if the API changes)
+- **Initial backfill:** 2024-2026, run locally (~3-6 hours). Older years backfilled later.
 
 ---
 
-## Options
+## NLP Classifier Architecture
 
-### Option A: Object Storage (R2/S3) + Redis Cache
+### Overview
 
-```
-CKAN API ──> Pipeline ──> Classify ──> Enrich ──> Object Store (R2/S3)
-                                                        │
-                                                        ▼
-                                                  Redis (hot cache)
-                                                        │
-                                                        ▼
-                                                   FastAPI ──> Frontend
-```
+The classifier uses spaCy's English language model (`en_core_web_sm`) for tokenization and lemmatization, then applies tiered keyword matching rules. This is NOT regex — spaCy breaks text into real linguistic tokens and reduces them to base forms (lemmas), which solves the false positive problem that regex can't handle.
 
-**How it works:**
-- Daily cron fetches new CKAN records, classifies them, enriches via Open311
-- Results written to an object store bucket as JSON (one file per dataset, e.g., `waste/classified_2025.json`)
-- On write, also push to Redis for immediate serving
-- On cold start (redeploy), backend reads from bucket into Redis
-- Historical backfill is a one-time batch job, results go to the bucket
+### Why spaCy tokenization matters
 
-**Object store options:**
-| Service | Free Tier | S3-Compatible | Notes |
-|---------|-----------|---------------|-------|
-| Cloudflare R2 | 10GB storage, 10M reads/mo | Yes | No egress fees, generous |
-| AWS S3 | 5GB (12 months) | Yes | Industry standard, egress costs |
-| Railway Volume | Persistent disk | No (filesystem) | Simplest, but tied to Railway |
-| Tigris (on Railway) | 5GB | Yes | Railway-native, S3-compatible |
+Regex matching for waste keywords produces false positives because target words appear as substrings of unrelated words:
 
-**Pros:**
-- Classified data survives Redis evictions, redeploys, and infra changes
-- Can share bucket between services (pipeline worker, backend API)
-- Standard pattern — boto3/s3 client is well-understood
-- Bucket is inspectable (download and look at the data directly)
-- Cost: effectively free at our scale
+| Word | Contains | But means |
+|------|----------|-----------|
+| Sa**turd**ay | "turd" | Day of the week |
+| s**pee**d | "pee" | Velocity |
+| s**crap**ed | "crap" | To scrape |
 
-**Cons:**
-- Extra service to configure (bucket credentials, CORS)
-- Two write targets (bucket + Redis) to keep in sync
-- Slightly more complex deploy
+spaCy tokenizes and lemmatizes each word independently, so:
+- "Saturday" → token `saturday`, lemma `saturday` (never matches "turd")
+- "speed" → token `speed`, lemma `speed` (never matches "pee")
+- "scraped" → token `scraped`, lemma `scrap` (never matches "crap")
 
-### Option B: Redis Only (extend current pattern)
+### Animal Waste Downgrade (False Positive Prevention)
+
+A critical part of the classifier is distinguishing **human** waste from **animal** waste. Many 311 records mention dog poop, which is not what we're looking for. The classifier handles this through a three-layer system:
+
+#### Layer 1: False Positive Context Detection
+
+When classifying text, the classifier checks for animal-related context words alongside waste terms:
 
 ```
-CKAN API ──> Pipeline ──> Classify ──> Enrich ──> Redis
-                                                    │
-                                                    ▼
-                                               FastAPI ──> Frontend
+FALSE_POSITIVE_CONTEXTS = {
+    "dog", "canine", "pet", "animal",
+    "rat", "rodent",
+    "restaurant", "establishment", "food", "inspection"
+}
 ```
 
-**How it works:**
-- Same pipeline, but results go directly to Redis with a long TTL (7 days)
-- On cold start, if Redis is empty, pipeline re-runs to repopulate
-- Historical data re-fetched and re-classified on demand
+If any of these words appear in the same record as a waste keyword, the record's score is multiplied by **0.3x** (70% reduction), dropping it from medium/high confidence to low.
 
-**Pros:**
-- Simplest — no new services
-- Matches existing needle/encampment data pattern exactly
-- Redis is already configured on Railway
+**Examples:**
+- "Dog poop removed" → `poop` matched + `dog` context → score reduced 70% → **low confidence** (correctly excluded)
+- "Poop removed" → `poop` matched, no animal context → **medium confidence** (correctly included)
+- "BPW do not pick up dog feces" → `fece` matched + `dog` context → score reduced → **low confidence**
 
-**Cons:**
-- Data lost on Redis restart or eviction (must re-fetch from CKAN + re-enrich from Open311)
-- Re-enrichment takes hours for historical data (Open311 rate limiting)
-- No persistent artifact to inspect or share
-- Open311 descriptions are NOT reproducible — if the API changes or goes down, we lose that data
+#### Layer 2: Phrase Override
 
-### Option C: Railway Volume (persistent filesystem)
+When an explicit **human-qualifying phrase** is present (e.g., "human poop", "human feces", "human waste"), the false positive downgrade is **skipped entirely** — the phrase already disambiguates:
+
+- "Human poop and clothing on curb near tree" → phrase `human poop` matched → `tree` does NOT trigger downgrade → **medium confidence**
+
+Without this override, the word "tree" (which appears as a location marker) would incorrectly downgrade the score.
+
+#### Layer 3: BPW Rejection Override
+
+The standard city rejection phrase "BPW does not service human waste on public streets" is detected as a special pattern. When present, the false positive downgrade is also skipped — this phrase is unambiguous confirmation of a human waste report.
+
+#### Scoring Flow
 
 ```
-CKAN API ──> Pipeline ──> Classify ──> Enrich ──> Volume (JSON files)
-                                                        │
-                                                        ▼
-                                                  Redis (hot cache)
-                                                        │
-                                                        ▼
-                                                   FastAPI ──> Frontend
+Input text
+    │
+    ▼
+┌──────────────────────────┐
+│  spaCy tokenize +        │
+│  lemmatize               │
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│  Check high-signal       │  fece, poop, shit, crap, turd,
+│  lemmas                  │  diarrhea, excrement, biohazard, ...
+│                          │  → +0.3 per match
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│  Check high-signal       │  "human waste", "bodily fluid",
+│  phrases                 │  "human feces", "fecal matter", ...
+│                          │  → +0.4 per match
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│  Check BPW rejection     │  "bpw does not service human waste"
+│  pattern                 │  → +0.8
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│  Check medium-signal     │  urine, vomit, sewage, pee, ...
+│  lemmas                  │  → +0.1 to +0.2 (depends on context)
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│  Check context boosters  │  encampment, homeless, needle,
+│  (only if signal exists) │  sidewalk, contractor, ...
+│                          │  → +0.05 per match
+└──────────┬───────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────┐
+│  FALSE POSITIVE CHECK                    │
+│                                          │
+│  If animal context words found           │
+│  AND no human-qualifying phrases         │
+│  AND no BPW rejection:                   │
+│       → score × 0.3 (70% reduction)     │
+│                                          │
+│  If human phrase OR BPW rejection:       │
+│       → no reduction (already confirmed) │
+└──────────┬───────────────────────────────┘
+           │
+           ▼
+┌──────────────────────────┐
+│  Assign confidence       │
+│  ≥ 0.6 → high            │
+│  ≥ 0.3 → medium          │
+│  > 0.0 → low             │
+│  = 0.0 → none            │
+└──────────────────────────┘
 ```
 
-**How it works:**
-- Pipeline writes classified results as JSON files to a Railway persistent volume
-- Backend reads from volume on cold start, pushes to Redis
-- Daily updates append to existing files
+### Keyword Configuration
 
-**Pros:**
-- No external service (stays within Railway)
-- Persistent across redeploys
-- Filesystem is simple to work with
+**High-signal lemmas** (single term = likely waste):
+`feces, fecal, fece, feece, poop, poope, excrement, biohazard, defecate, defacate, defacating, defecation, shit, crap, turd, diarrhea`
 
-**Cons:**
-- Tied to Railway — harder to migrate
-- Volume is attached to one service — can't share between pipeline worker and backend easily
-- Not inspectable from outside (can't download files without SSH)
-- No versioning or lifecycle management
+Note: includes common misspellings (`feece` for "feeces", `defacate`/`defacating` for "defecate") and spaCy lemma variants (`poope` is spaCy's lemma for "pooped", `fece` for "feces").
+
+**High-signal phrases** (multi-word = very likely waste):
+`human waste, bodily fluid, human fece, human feece, bio hazard, bio waste, human feces, human excrement, human poop, human dump, human diarrhea, fecal matter, outside contractor, biohazard contractor, not service human`
+
+**Medium-signal lemmas** (need context to distinguish human vs animal):
+`urine, urinate, urination, pee, peed, stool, vomit, sewage, soiled, bathroom`
+
+**Context boosters** (upgrade medium signal when co-occurring):
+`encampment, homeless, needle, syringe, sidewalk, street, public, tent, camp, contractor`
+
+**False positive contexts** (downgrade when co-occurring with waste terms):
+`dog, canine, pet, animal, rat, rodent, restaurant, establishment, food, inspection`
+
+### Classifier Performance
+
+Tested against 50 confirmed human waste reports from the `INFO_HumanWaste` queue (enriched with Open311 descriptions):
+
+| Metric | Value |
+|--------|-------|
+| Recall | 98% (49/50) |
+| Precision | 100% (0 false positives on 32K records) |
+| Only miss | "Human faces and socks" (typo for "feces") |
 
 ---
 
-## Recommendation: Option A — Object Storage (R2/S3) + Redis Cache
+## Storage Architecture
 
-**Use Cloudflare R2 or Tigris (Railway-native S3).** Reasons:
-
-1. **Open311 descriptions are the critical asset.** The city doesn't include them in the data feed. If we lose our enriched data, it costs hours to re-fetch. A bucket preserves this permanently.
-
-2. **Cost is zero** at our scale. R2 free tier is 10GB storage, 10M reads/month. We'll use maybe 50MB total.
-
-3. **Inspectability.** Brian (or anyone) can download the classified JSON from the bucket and work with it offline. Can't do that with Redis.
-
-4. **Decouples processing from serving.** Pipeline writes to bucket on its schedule. Backend reads from bucket on cold start. Redis is purely a hot cache that can be rebuilt.
-
-### Recommended bucket structure
+### Tigris Bucket Structure
 
 ```
 waste-pipeline/
+  raw/
+    ckan/
+      street_cleaning_2024.json    # Raw CKAN records
+      street_cleaning_2025.json
+      street_cleaning_2026.json
+      all_types_2025.json          # Multi-type fetch
   classified/
-    2025.json              # All classified records for 2025
-    2024.json
-    ...
+    2024.json                      # Classified + enriched records
+    2025.json
+    2026.json
   enriched/
-    descriptions.json      # Open311 descriptions cache (keyed by case_id)
+    descriptions.json              # Open311 descriptions cache (keyed by case_id)
   geo/
-    boston_zipcodes.geojson  # ZIP code boundaries for polygon lookup
+    boston_zipcodes.geojson         # ZIP code boundaries for polygon lookup
   metadata/
-    last_run.json           # Timestamp + stats of last pipeline run
-    classifier_config.json  # Keyword lists, version info
+    last_run.json                  # Timestamp + stats of last pipeline run
+    classifier_config.json         # Keyword lists, version info
 ```
 
-Each `classified/{year}.json` contains an array of objects:
+### Data Flow
+
+```
+                                        Tigris (permanent storage)
+                                       ┌─────────────────────────┐
+CKAN API ──┐                           │  raw/ckan/*.json        │
+           │                           │  classified/*.json      │
+           ▼                           │  enriched/desc.json     │
+┌─────────────────────┐                │  geo/zipcodes.geojson   │
+│  Pipeline Service   │  write ──────> │  metadata/last_run.json │
+│  (daily cron)       │                └────────────┬────────────┘
+│                     │                             │
+│  1. Fetch CKAN      │                             │ read on startup
+│  2. Classify (spaCy)│                             │
+│  3. Enrich (Open311)│                             ▼
+│  4. Fill ZIP codes  │                ┌─────────────────────────┐
+│  5. Write to Tigris │                │  FastAPI Backend        │
+└─────────────────────┘                │  app.state.waste_stats  │
+                                       │  (in-memory, like       │
+                                       │   needle/encampment)    │
+                                       │                         │
+                                       │  /api/waste/stats/page  │
+                                       │  /api/waste/heatmap     │
+                                       │  /api/waste/markers     │
+                                       └─────────────────────────┘
+```
+
+No Redis layer for waste data. The backend reads classified JSON from Tigris on startup (~100-200ms) and holds it in memory. This matches the existing pattern — needle and encampment data is also held in `app.state` after being fetched/computed, not read from Redis per-request.
+
+### Classified Record Schema
+
+Each `classified/{year}.json` contains an array:
 
 ```json
 {
@@ -167,6 +254,8 @@ Each `classified/{year}.json` contains an array of objects:
   "tier": "misrouted",
   "matched_terms": ["fece"],
   "matched_phrases": ["human waste"],
+  "bpw_rejection": true,
+  "false_positive_flags": [],
   "lat": 42.345,
   "lng": -71.073,
   "neighborhood": "South End",
@@ -181,19 +270,23 @@ Each `classified/{year}.json` contains an array of objects:
 }
 ```
 
-### Three-tier classification
+### Three-Tier Classification
 
 | Tier | Meaning | How detected |
 |------|---------|-------------|
 | `confirmed` | Properly routed to biohazard contractor | queue = `INFO_HumanWaste` |
-| `misrouted` | Waste report sent to wrong team | Classifier match in closure_reason or description, queue != INFO_HumanWaste |
-| `enriched_only` | Only detectable from Open311 description | No signal in closure_reason, matched only after enrichment |
+| `misrouted` | Waste report sent to wrong team | Classifier match in closure_reason or description, queue != `INFO_HumanWaste` |
+| `enriched_only` | Only detectable from Open311 description | No signal in closure_reason, matched only after Open311 enrichment |
 
 ---
 
-## Pipeline Architecture
+## Pipeline Service
 
-### Daily incremental pipeline
+### Deployment
+
+Separate Railway service running as a daily cron. Shares the same Python/uv base as the backend but runs independently. Can reuse the same Docker image with a different entrypoint command (e.g., `python -m waste_pipeline.run` vs `uvicorn boston_needle_map.api:app`).
+
+### Daily Incremental Pipeline
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -206,67 +299,38 @@ Each `classified/{year}.json` contains an array of objects:
 │  2. Classify with spaCy                         │  <1s
 │     - Tokenize + lemmatize                      │
 │     - Match against keyword tiers               │
+│     - Animal waste downgrade                    │
 │     - Score and assign confidence               │
 │                                                 │
 │  3. Enrich matches via Open311                  │  ~5-10s
 │     - Only records with signal OR               │
 │       queue=INFO_HumanWaste                     │
-│     - Cache descriptions in bucket              │
+│     - Check description cache first             │
 │                                                 │
 │  4. Fill missing ZIP codes                      │  <1s
 │     - Point-in-polygon with GeoJSON             │
 │     - Only for records missing zipcode          │
 │                                                 │
-│  5. Write to bucket                             │  ~1s
+│  5. Write to Tigris                             │  ~1s
 │     - Append to classified/{year}.json          │
+│     - Store raw records to raw/ckan/            │
 │     - Update descriptions cache                 │
 │     - Update last_run.json                      │
-│                                                 │
-│  6. Push to Redis                               │  <1s
-│     - Update hot cache for API serving          │
 │                                                 │
 │  Total: ~15-20 seconds                          │
 └─────────────────────────────────────────────────┘
 ```
 
-### Historical backfill (one-time)
+### Historical Backfill
 
-```
-┌─────────────────────────────────────────────────┐
-│  Backfill Job                                   │
-│                                                 │
-│  For each year 2015-2026:                       │
-│    1. Fetch all street cleaning records          │
-│    2. Classify closure_reason (fast)            │
-│    3. Enrich ALL records via Open311            │  ~3h per year
-│       (rate-limited, cached incrementally)       │
-│    4. Fill ZIP codes                            │
-│    5. Write to bucket                           │
-│                                                 │
-│  Total: ~24-36 hours (run once, overnight)      │
-│  Can be interrupted and resumed (cached)        │
-└─────────────────────────────────────────────────┘
-```
+Run locally (not on Railway) due to Open311 rate limiting. Interruptible and resumable — descriptions are cached incrementally.
 
-### Backend serving
+| Scope | Estimated Time | Records |
+|-------|---------------|---------|
+| 2024-2026 | 3-6 hours | ~60K street cleaning |
+| 2015-2026 | 24-36 hours | ~200K+ street cleaning |
 
-```
-┌─────────────────────────────────────────────────┐
-│  FastAPI Backend                                │
-│                                                 │
-│  On startup:                                    │
-│    1. Check Redis for waste data                │
-│    2. If miss, read from bucket                 │
-│    3. Compute stats (same as needle/encampment) │
-│    4. Serve via /api/waste/* endpoints          │
-│                                                 │
-│  Endpoints:                                     │
-│    GET /api/waste/stats/page                    │
-│    GET /api/waste/heatmap                       │
-│    GET /api/waste/markers                       │
-│    GET /api/waste/neighborhoods                 │
-└─────────────────────────────────────────────────┘
-```
+Starting with 2024-2026. Older years backfilled later.
 
 ---
 
@@ -275,25 +339,14 @@ Each `classified/{year}.json` contains an array of objects:
 Two approaches, used together:
 
 ### 1. Point-in-polygon lookup (primary)
-- Download Boston ZIP code GeoJSON (from Census Bureau TIGER/Line or data.boston.gov)
-- Store in bucket at `geo/boston_zipcodes.geojson`
+- Boston ZIP code GeoJSON from Census Bureau TIGER/Line or data.boston.gov
+- Store in Tigris at `geo/boston_zipcodes.geojson`, load at pipeline startup
 - Use Shapely for point-in-polygon: given (lat, lng), find containing ZIP polygon
 - Fast (<1ms per point), no API calls, works offline
+- Covers 100% of records with lat/lng (99.98% of all records)
 
 ### 2. Census Bureau Geocoder (fallback)
 - Free, no API key needed
 - Bulk endpoint: up to 10,000 addresses per batch
 - URL: `https://geocoding.geo.census.gov/geocoder/geographies/coordinates`
-- Use only for records where polygon lookup fails (edge cases at boundaries)
-
----
-
-## Open Questions
-
-1. **Tigris vs R2?** Tigris is Railway-native (simpler config), R2 has a larger free tier and is provider-independent. Both are S3-compatible.
-
-2. **Should the pipeline run inside the existing backend or as a separate service?** Running inside the backend is simpler (shared Redis connection, no extra deploy). Separate service is cleaner but adds a Railway service cost.
-
-3. **How much historical enrichment is worth doing?** Full backfill of all years via Open311 takes ~24-36 hours. Could start with just 2024-2026 (~3-6 hours) and backfill older years later.
-
-4. **Should we store raw CKAN records in the bucket too?** Pro: full reproducibility. Con: ~100MB per year, and the data is always re-fetchable from CKAN.
+- Use only for edge cases where polygon lookup fails
