@@ -301,10 +301,22 @@ export default function HeatMap({
 		encampmentHeatLayerRef.current = null
 		wasteHeatLayerRef.current = null
 
-		// Remove marker groups when switching layers
-		if (markerGroupRef.current) map.removeLayer(markerGroupRef.current)
-		if (encampmentMarkerGroupRef.current) map.removeLayer(encampmentMarkerGroupRef.current)
-		if (wasteMarkerGroupRef.current) map.removeLayer(wasteMarkerGroupRef.current)
+		// Remove marker groups and clear them when switching layers
+		if (markerGroupRef.current) {
+			map.removeLayer(markerGroupRef.current)
+			markerGroupRef.current.clearLayers()
+		}
+		if (encampmentMarkerGroupRef.current) {
+			map.removeLayer(encampmentMarkerGroupRef.current)
+			encampmentMarkerGroupRef.current.clearLayers()
+		}
+		if (wasteMarkerGroupRef.current) {
+			map.removeLayer(wasteMarkerGroupRef.current)
+			wasteMarkerGroupRef.current.clearLayers()
+		}
+		markersLoaded.current = false
+		encampmentMarkersLoaded.current = false
+		wasteMarkersLoaded.current = false
 
 		// Reset filter to "all" when switching layers
 		setSelYear("all")
