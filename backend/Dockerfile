@@ -17,4 +17,4 @@ RUN mkdir -p /app/tmp && chown 1000:1000 /app/tmp
 
 USER appuser
 
-CMD ["/app/.venv/bin/uvicorn", "boston_needle_map.api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD /app/.venv/bin/uvicorn boston_needle_map.api:app --host 0.0.0.0 --port ${PORT:-8000}
