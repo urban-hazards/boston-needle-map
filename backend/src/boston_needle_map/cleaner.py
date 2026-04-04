@@ -62,3 +62,11 @@ def clean(row: dict[str, Any]) -> CleanedRecord | None:
         zipcode=zipcode,
         resp_hrs=resp_hrs,
     )
+
+
+def fill_missing_zip(df):
+    """
+    Fill missing zip codes with 'UNKNOWN'
+    """
+    df["zipcode"] = df["zipcode"].fillna("UNKNOWN")
+    return df
