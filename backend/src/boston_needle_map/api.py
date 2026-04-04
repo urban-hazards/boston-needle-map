@@ -156,6 +156,26 @@ async def get_stats() -> DashboardStats:
     return _get_stats()
 
 
+@app.get("/api/stats/page")
+async def get_page_stats() -> dict[str, object]:
+    """Lightweight stats for SSR page — excludes heavy heatmap/marker/points data."""
+    stats = _get_stats()
+    return {
+        "total": stats.total,
+        "years": stats.years,
+        "hoods": [h.model_dump() for h in stats.hoods],
+        "hourly": stats.hourly,
+        "year_monthly": stats.year_monthly,
+        "zip_stats": [z.model_dump() for z in stats.zip_stats],
+        "generated": stats.generated,
+        "peak_hood": stats.peak_hood,
+        "peak_hour": stats.peak_hour,
+        "peak_dow": stats.peak_dow,
+        "avg_monthly": stats.avg_monthly,
+        "initial_heat": stats.heat_keys.get("all", []),
+    }
+
+
 @app.get("/api/stats/summary", response_model=SummaryResponse)
 async def get_summary() -> SummaryResponse:
     stats = _get_stats()

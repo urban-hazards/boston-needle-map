@@ -1,4 +1,4 @@
-import type { DashboardStats, NeighborhoodStat } from "./types"
+import type { NeighborhoodStat, PageStats } from "./types"
 
 const API_BASE = process.env.API_URL || "http://localhost:8000"
 
@@ -10,8 +10,8 @@ async function apiFetch<T>(path: string): Promise<T> {
 	return res.json() as Promise<T>
 }
 
-export function fetchStats(): Promise<DashboardStats> {
-	return apiFetch<DashboardStats>("/api/stats")
+export function fetchPageStats(): Promise<PageStats> {
+	return apiFetch<PageStats>("/api/stats/page")
 }
 
 export function fetchNeighborhoods(): Promise<NeighborhoodStat[]> {

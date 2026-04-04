@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react"
-import type { MarkerData } from "../lib/types"
+import type { HeatmapResponse, MarkerData } from "../lib/types"
 
 declare const L: typeof import("leaflet")
 
 interface HeatMapProps {
-	heatKeys: Record<string, number[][]>
-	markers: MarkerData[]
+	initialHeat: number[][]
 	years: number[]
 	total: number
+	apiBase: string
 }
 
 const GRADIENT: Record<number, string> = {
@@ -35,29 +35,22 @@ const MONTHS = [
 	"December",
 ]
 
-function heatKey(yr: string, mo: number): string {
-	if (mo === 0) return yr === "all" ? "all" : yr
-	const moPad = String(mo).padStart(2, "0")
-	return yr === "all" ? `all-${moPad}` : `${yr}-${moPad}`
-}
-
-function getCount(heatKeys: Record<string, number[][]>, yr: string, mo: number): number {
-	const pts = heatKeys[heatKey(yr, mo)] || []
-	return pts.reduce((s, p) => s + p[2], 0)
-}
-
-export default function HeatMap({ heatKeys, markers, years, total }: HeatMapProps) {
+export default function HeatMap({ initialHeat, years, total, apiBase }: HeatMapProps) {
 	const mapRef = useRef<HTMLDivElement>(null)
 	const mapInstance = useRef<L.Map | null>(null)
 	const heatLayerRef = useRef<L.Layer | null>(null)
 	const markerGroupRef = useRef<L.LayerGroup | null>(null)
+	const markersLoaded = useRef(false)
 
 	const [selYear, setSelYear] = useState("all")
 	const [selMonth, setSelMonth] = useState(0)
 	const [count, setCount] = useState(total)
 	const [ready, setReady] = useState(false)
+	const [loading, setLoading] = useState(false)
 	const [isMobile, setIsMobile] = useState(false)
 	const [filterOpen, setFilterOpen] = useState(false)
+
+	const heatCacheRef = useRef<Record<string, number[][]>>({ all: initialHeat })
 
 	useEffect(() => {
 		const check = () => setIsMobile(window.innerWidth < 640)
@@ -99,31 +92,43 @@ export default function HeatMap({ heatKeys, markers, years, total }: HeatMapProp
 				maxZoom: 19,
 			}).addTo(map)
 
-			const pts = heatKeys.all || []
-			const layer = createHeatLayer(pts)
+			const layer = createHeatLayer(initialHeat)
 			layer.addTo(map)
 			heatLayerRef.current = layer
 
-			const group = L.layerGroup()
-			for (const m of markers) {
-				L.circleMarker([m.lat, m.lng], {
-					radius: 5,
-					fillColor: "#e85a1b",
-					fillOpacity: 0.85,
-					color: "#fff",
-					weight: 1,
-					opacity: 0.6,
-				})
-					.bindPopup(
-						`<div style="font-size:12px;line-height:1.6;color:#222"><b style="font-size:13px;color:#e85a1b;display:block">${m.hood || "Unknown"}</b>${m.street || ""}<br>${m.dt}${m.zip ? ` &middot; ${m.zip}` : ""}</div>`,
-					)
-					.addTo(group)
-			}
-			markerGroupRef.current = group
+			// Load markers lazily when user zooms in
+			const markerGroup = L.layerGroup()
+			markerGroupRef.current = markerGroup
 
-			map.on("zoomend", () => {
-				if (map.getZoom() >= 15) map.addLayer(group)
-				else map.removeLayer(group)
+			map.on("zoomend", async () => {
+				if (map.getZoom() >= 15) {
+					if (!markersLoaded.current) {
+						markersLoaded.current = true
+						try {
+							const res = await fetch(`${apiBase}/api/markers?limit=3000`)
+							const markers: MarkerData[] = await res.json()
+							for (const m of markers) {
+								L.circleMarker([m.lat, m.lng], {
+									radius: 5,
+									fillColor: "#e85a1b",
+									fillOpacity: 0.85,
+									color: "#fff",
+									weight: 1,
+									opacity: 0.6,
+								})
+									.bindPopup(
+										`<div style="font-size:12px;line-height:1.6;color:#222"><b style="font-size:13px;color:#e85a1b;display:block">${m.hood || "Unknown"}</b>${m.street || ""}<br>${m.dt}${m.zip ? ` &middot; ${m.zip}` : ""}</div>`,
+									)
+									.addTo(markerGroup)
+							}
+						} catch {
+							markersLoaded.current = false
+						}
+					}
+					map.addLayer(markerGroup)
+				} else {
+					map.removeLayer(markerGroup)
+				}
 			})
 
 			setReady(true)
@@ -139,21 +144,47 @@ export default function HeatMap({ heatKeys, markers, years, total }: HeatMapProp
 		}
 	}, [])
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: heatKeys is a stable prop from SSR
+	// Fetch heatmap data on demand when filter changes
+	// biome-ignore lint/correctness/useExhaustiveDependencies: apiBase is stable
 	useEffect(() => {
 		if (!ready || !mapInstance.current) return
 
-		const key = heatKey(selYear, selMonth)
-		const pts = heatKeys[key] || []
+		const yr = selYear
+		const mo = selMonth
+		const key =
+			mo === 0
+				? yr === "all"
+					? "all"
+					: yr
+				: `${yr === "all" ? "all" : yr}-${String(mo).padStart(2, "0")}`
 
+		const cached = heatCacheRef.current[key]
+		if (cached) {
+			updateHeatLayer(cached)
+			return
+		}
+
+		setLoading(true)
+		fetch(`${apiBase}/api/heatmap?year=${yr}&month=${mo}`)
+			.then((res) => res.json())
+			.then((data: HeatmapResponse) => {
+				heatCacheRef.current[data.key] = data.points
+				updateHeatLayer(data.points)
+			})
+			.catch(() => {})
+			.finally(() => setLoading(false))
+	}, [selYear, selMonth, ready])
+
+	function updateHeatLayer(pts: number[][]) {
+		if (!mapInstance.current) return
 		if (heatLayerRef.current) {
 			mapInstance.current.removeLayer(heatLayerRef.current)
 		}
 		const layer = createHeatLayer(pts)
 		layer.addTo(mapInstance.current)
 		heatLayerRef.current = layer
-		setCount(getCount(heatKeys, selYear, selMonth))
-	}, [selYear, selMonth, ready])
+		setCount(pts.reduce((s, p) => s + p[2], 0))
+	}
 
 	const showFilterPanel = !isMobile || filterOpen
 
@@ -278,7 +309,13 @@ export default function HeatMap({ heatKeys, markers, years, total }: HeatMapProp
 						boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
 					}}
 				>
-					Showing <strong>{count.toLocaleString()}</strong> requests
+					{loading ? (
+						"Loading..."
+					) : (
+						<>
+							Showing <strong>{count.toLocaleString()}</strong> requests
+						</>
+					)}
 				</div>
 			</div>
 			<div

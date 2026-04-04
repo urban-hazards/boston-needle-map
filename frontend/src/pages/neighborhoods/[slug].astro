@@ -2,13 +2,13 @@
 import Footer from "../../components/Footer.astro"
 import Header from "../../components/Header.astro"
 import BaseLayout from "../../layouts/BaseLayout.astro"
-import { fetchStats } from "../../lib/api"
+import { fetchPageStats } from "../../lib/api"
 import { formatNumber } from "../../lib/seo"
 import "../../styles/global.css"
 
 const { slug } = Astro.params
 
-const stats = await fetchStats()
+const stats = await fetchPageStats()
 
 const neighborhood = stats.hoods.find((h) => {
 	const hSlug = h.name

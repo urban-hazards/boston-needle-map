@@ -8,11 +8,11 @@ import NeighborhoodTable from "../components/NeighborhoodTable.astro"
 import StatsOverview from "../components/StatsOverview.astro"
 import ZipCodeList from "../components/ZipCodeList.astro"
 import BaseLayout from "../layouts/BaseLayout.astro"
-import { fetchStats } from "../lib/api"
+import { fetchPageStats } from "../lib/api"
 import { formatHour, formatNumber } from "../lib/seo"
 import "../styles/global.css"
 
-const stats = await fetchStats()
+const stats = await fetchPageStats()
 
 const neighborhoods = stats.hoods.map((h) => ({
 	...h,
@@ -52,10 +52,10 @@ const description = `Interactive heatmap and analysis of ${formatNumber(stats.to
 
 		<HeatMap
 			client:load
-			heatKeys={stats.heat_keys}
-			markers={stats.markers}
+			initialHeat={stats.initial_heat}
 			years={stats.years}
 			total={stats.total}
+			apiBase={process.env.API_URL || "http://localhost:8000"}
 		/>
 
 		<section class="section" aria-label="Trend charts">

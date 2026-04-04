@@ -21,6 +21,21 @@ export interface MarkerData {
 	zip: string
 }
 
+export interface PageStats {
+	total: number
+	years: number[]
+	hoods: NeighborhoodStat[]
+	hourly: number[]
+	year_monthly: Record<string, number[]>
+	zip_stats: ZipStat[]
+	generated: string
+	peak_hood: string
+	peak_hour: number
+	peak_dow: string
+	avg_monthly: number
+	initial_heat: number[][]
+}
+
 export interface DashboardStats {
 	total: number
 	years: number[]
@@ -36,6 +51,11 @@ export interface DashboardStats {
 	peak_hour: number
 	peak_dow: string
 	avg_monthly: number
+}
+
+export interface HeatmapResponse {
+	key: string
+	points: number[][]
 }
 
 export interface SummaryStats {
