@@ -6,12 +6,16 @@ declare const L: typeof import("leaflet")
 interface HeatMapProps {
 	needlePoints: number[][]
 	encampmentPoints: number[][]
+	wastePoints: number[][]
 	needleMarkers: MarkerData[]
 	encampmentMarkers: MarkerData[]
+	wasteMarkers: MarkerData[]
 	years: number[]
 	encampmentYears: number[]
+	wasteYears: number[]
 	total: number
 	encampmentTotal: number
+	wasteTotal: number
 }
 
 const NEEDLE_GRADIENT: Record<number, string> = {
@@ -34,7 +38,17 @@ const ENCAMPMENT_GRADIENT: Record<number, string> = {
 	1.0: "rgba(140,10,120,0.6)",
 }
 
-type DataLayer = "needles" | "encampments" | "both"
+const WASTE_GRADIENT: Record<number, string> = {
+	0.0: "rgba(0,0,0,0)",
+	0.12: "rgba(100,60,20,0.25)",
+	0.3: "rgba(140,80,20,0.35)",
+	0.5: "rgba(180,120,30,0.45)",
+	0.7: "rgba(160,100,20,0.5)",
+	0.88: "rgba(120,70,10,0.55)",
+	1.0: "rgba(90,50,10,0.6)",
+}
+
+type DataLayer = "needles" | "encampments" | "waste" | "both"
 
 const MONTHS = [
 	"January",
@@ -80,32 +94,41 @@ function filterAndBin(
 export default function HeatMap({
 	needlePoints,
 	encampmentPoints,
+	wastePoints,
 	needleMarkers,
 	encampmentMarkers,
+	wasteMarkers,
 	years,
 	encampmentYears,
+	wasteYears,
 	total,
 	encampmentTotal,
+	wasteTotal,
 }: HeatMapProps) {
 	const mapRef = useRef<HTMLDivElement>(null)
 	const mapInstance = useRef<L.Map | null>(null)
 	const heatLayerRef = useRef<L.Layer | null>(null)
 	const encampmentHeatLayerRef = useRef<L.Layer | null>(null)
+	const wasteHeatLayerRef = useRef<L.Layer | null>(null)
 	const markerGroupRef = useRef<L.LayerGroup | null>(null)
 	const encampmentMarkerGroupRef = useRef<L.LayerGroup | null>(null)
+	const wasteMarkerGroupRef = useRef<L.LayerGroup | null>(null)
 	const markersLoaded = useRef(false)
 	const encampmentMarkersLoaded = useRef(false)
+	const wasteMarkersLoaded = useRef(false)
 
 	const [selYear, setSelYear] = useState("all")
 	const [selMonth, setSelMonth] = useState(0)
 	const [dataLayer, setDataLayer] = useState<DataLayer>("both")
 	const [count, setCount] = useState(total)
 	const [encampmentCount, setEncampmentCount] = useState(encampmentTotal)
+	const [wasteCount, setWasteCount] = useState(wasteTotal)
 	const [ready, setReady] = useState(false)
 	const [isMobile, setIsMobile] = useState(false)
 	const [filterOpen, setFilterOpen] = useState(false)
 
-	const activeYears = dataLayer === "encampments" ? encampmentYears : years
+	const activeYears =
+		dataLayer === "encampments" ? encampmentYears : dataLayer === "waste" ? wasteYears : years
 
 	useEffect(() => {
 		const check = () => setIsMobile(window.innerWidth < 640)
@@ -161,6 +184,7 @@ export default function HeatMap({
 			// Marker groups
 			markerGroupRef.current = L.layerGroup()
 			encampmentMarkerGroupRef.current = L.layerGroup()
+			wasteMarkerGroupRef.current = L.layerGroup()
 
 			map.on("zoomend", () => handleZoom(map))
 
@@ -184,6 +208,7 @@ export default function HeatMap({
 		} else {
 			if (markerGroupRef.current) map.removeLayer(markerGroupRef.current)
 			if (encampmentMarkerGroupRef.current) map.removeLayer(encampmentMarkerGroupRef.current)
+			if (wasteMarkerGroupRef.current) map.removeLayer(wasteMarkerGroupRef.current)
 		}
 	}
 
@@ -233,11 +258,32 @@ export default function HeatMap({
 			}
 		}
 
+		if (layer === "waste" && !wasteMarkersLoaded.current && wasteMarkerGroupRef.current) {
+			wasteMarkersLoaded.current = true
+			for (const m of wasteMarkers) {
+				L.circleMarker([m.lat, m.lng], {
+					radius: 5,
+					fillColor: "#8B6914",
+					fillOpacity: 0.85,
+					color: "#fff",
+					weight: 1,
+					opacity: 0.6,
+				})
+					.bindPopup(
+						`<div style="font-size:12px;line-height:1.6;color:#222"><b style="font-size:13px;color:#8B6914;display:block">Human Waste: ${m.hood || "Unknown"}</b>${m.street || ""}<br>${m.dt}${m.zip ? ` &middot; ${m.zip}` : ""}</div>`,
+					)
+					.addTo(wasteMarkerGroupRef.current as L.LayerGroup)
+			}
+		}
+
 		if ((layer === "needles" || layer === "both") && markerGroupRef.current) {
 			map.addLayer(markerGroupRef.current)
 		}
 		if ((layer === "encampments" || layer === "both") && encampmentMarkerGroupRef.current) {
 			map.addLayer(encampmentMarkerGroupRef.current)
+		}
+		if (layer === "waste" && wasteMarkerGroupRef.current) {
+			map.addLayer(wasteMarkerGroupRef.current)
 		}
 	}
 
@@ -250,12 +296,15 @@ export default function HeatMap({
 		// Remove existing layers
 		if (heatLayerRef.current) map.removeLayer(heatLayerRef.current)
 		if (encampmentHeatLayerRef.current) map.removeLayer(encampmentHeatLayerRef.current)
+		if (wasteHeatLayerRef.current) map.removeLayer(wasteHeatLayerRef.current)
 		heatLayerRef.current = null
 		encampmentHeatLayerRef.current = null
+		wasteHeatLayerRef.current = null
 
 		// Remove marker groups when switching layers
 		if (markerGroupRef.current) map.removeLayer(markerGroupRef.current)
 		if (encampmentMarkerGroupRef.current) map.removeLayer(encampmentMarkerGroupRef.current)
+		if (wasteMarkerGroupRef.current) map.removeLayer(wasteMarkerGroupRef.current)
 
 		// Reset filter to "all" when switching layers
 		setSelYear("all")
@@ -276,6 +325,14 @@ export default function HeatMap({
 			layer.addTo(map)
 			encampmentHeatLayerRef.current = layer
 			setEncampmentCount(encampmentPoints.length)
+		}
+
+		if (dataLayer === "waste") {
+			const pts = filterAndBin(wastePoints, "all", 0)
+			const layer = createHeatLayer(pts, WASTE_GRADIENT)
+			layer.addTo(map)
+			wasteHeatLayerRef.current = layer
+			setWasteCount(wastePoints.length)
 		}
 
 		// Re-show markers if zoomed in
@@ -316,6 +373,20 @@ export default function HeatMap({
 				return true
 			}).length
 			setEncampmentCount(filteredCount)
+		}
+
+		if (dataLayer === "waste") {
+			if (wasteHeatLayerRef.current) map.removeLayer(wasteHeatLayerRef.current)
+			const pts = filterAndBin(wastePoints, selYear, selMonth)
+			const layer = createHeatLayer(pts, WASTE_GRADIENT)
+			layer.addTo(map)
+			wasteHeatLayerRef.current = layer
+			const filteredCount = wastePoints.filter(([, , yr, mo]) => {
+				if (selYear !== "all" && yr !== Number(selYear)) return false
+				if (selMonth !== 0 && mo !== selMonth) return false
+				return true
+			}).length
+			setWasteCount(filteredCount)
 		}
 	}, [selYear, selMonth, ready, dataLayer])
 
@@ -401,8 +472,15 @@ export default function HeatMap({
 								onChange={setDataLayer}
 							/>
 							<LayerRadio
+								value="waste"
+								label="Human Waste (Beta)"
+								color="#8B6914"
+								checked={dataLayer === "waste"}
+								onChange={setDataLayer}
+							/>
+							<LayerRadio
 								value="both"
-								label="Both"
+								label="Sharps + Encampments"
 								color="#333"
 								checked={dataLayer === "both"}
 								onChange={setDataLayer}
@@ -479,6 +557,12 @@ export default function HeatMap({
 							<strong>{encampmentCount.toLocaleString()}</strong> encampments
 						</span>
 					)}
+					{dataLayer === "waste" && (
+						<span style={{ color: "#8B6914" }}>
+							<strong>{wasteCount.toLocaleString()}</strong> human waste reports
+							<span style={{ fontSize: "10px", opacity: 0.7 }}> (beta)</span>
+						</span>
+					)}
 				</div>
 			</div>
 
@@ -523,6 +607,23 @@ export default function HeatMap({
 							}}
 						/>
 						<span>High</span>
+					</div>
+				)}
+				{dataLayer === "waste" && (
+					<div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+						<span style={{ color: "#8B6914", fontWeight: 600, minWidth: 90 }}>Human Waste</span>
+						<span>Low</span>
+						<div
+							style={{
+								height: 8,
+								flex: 1,
+								borderRadius: 4,
+								background:
+									"linear-gradient(90deg, transparent 0%, #8B6914 20%, #B4891E 50%, #A06414 75%, #5A320A 100%)",
+							}}
+						/>
+						<span>High</span>
+						<span style={{ fontSize: "10px", color: "#999", marginLeft: 4 }}>BETA</span>
 					</div>
 				)}
 			</div>
