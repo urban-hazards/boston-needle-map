@@ -45,7 +45,8 @@ def clean(row: dict[str, Any]) -> CleanedRecord | None:
         row.get("neighborhood") or row.get("NEIGHBORHOOD") or row.get("neighborhood_services_district") or ""
     ).strip()
     street = (row.get("location_street_name") or row.get("LOCATION_STREET_NAME") or "").strip()
-    zipcode = (row.get("location_zipcode") or row.get("LOCATION_ZIPCODE") or "").strip()[:5]
+    zipcode_raw = (row.get("location_zipcode") or row.get("LOCATION_ZIPCODE") or "").strip()[:5]
+    zipcode = zipcode_raw.zfill(5) if zipcode_raw and zipcode_raw.isdigit() else zipcode_raw
 
     resp_hrs = round((closed - dt).total_seconds() / 3600, 1) if closed else None
 
