@@ -57,16 +57,28 @@ export default function MonthlyTrend({ yearMonthly }: MonthlyTrendProps) {
 	useEffect(() => {
 		if (!canvasRef.current) return
 
-		const now = new Date()
-		const currentYear = now.getFullYear()
-		const currentMonth = now.getMonth() // 0-indexed
+		// Data is released monthly — the most recent non-zero month in the
+		// latest year is almost certainly partial, so null it out along with
+		// all future months so the line doesn't misleadingly drop.
+		const allYears = Object.keys(yearMonthly)
+			.map(Number)
+			.sort((a, b) => a - b)
+		const latestYear = allYears[allYears.length - 1]
+		const latestVals = yearMonthly[String(latestYear)] || []
+		let lastNonZero = -1
+		for (let i = latestVals.length - 1; i >= 0; i--) {
+			if (latestVals[i] > 0) {
+				lastNonZero = i
+				break
+			}
+		}
+		// Keep months up to but NOT including the last non-zero (it's partial)
+		const cutoffMonth = lastNonZero > 0 ? lastNonZero - 1 : -1
 
 		const datasets = Object.entries(yearMonthly).map(([yr, vals], i) => {
 			let data: (number | null)[] = vals
-			// For the current year, replace future months (no data yet) with null
-			// so Chart.js breaks the line instead of dropping to zero
-			if (Number(yr) === currentYear) {
-				data = vals.map((v, monthIdx) => (monthIdx > currentMonth ? null : v))
+			if (Number(yr) === latestYear && cutoffMonth >= 0) {
+				data = vals.map((v, monthIdx) => (monthIdx > cutoffMonth ? null : v))
 			}
 			return {
 				label: yr,
