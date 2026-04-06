@@ -7,6 +7,8 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
+from tenacity import before_sleep_log, retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+
 from pipeline.config import (
     CKAN_BASE,
     ENCAMPMENT_START_YEAR,
@@ -20,15 +22,22 @@ from pipeline.config import (
 logger = logging.getLogger(__name__)
 
 
+@retry(
+    stop=stop_after_attempt(10),
+    wait=wait_exponential(multiplier=2, min=2, max=120),
+    retry=retry_if_exception_type((urllib.error.URLError, TimeoutError)),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    reraise=True,
+)
 def _api_get(url: str) -> dict[str, Any] | None:
     """GET a CKAN API endpoint, return parsed JSON or None."""
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": UA})
-        with urllib.request.urlopen(req, timeout=120) as resp:
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        try:
             return json.loads(resp.read().decode("utf-8"))  # type: ignore[no-any-return]
-    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
-        logger.error("API error: %s", e)
-        return None
+        except json.JSONDecodeError as e:
+            logger.error("Invalid JSON response: %s", e)
+            return None
 
 
 def _fetch_type_records_sql(resource_id: str, types: set[str]) -> list[dict[str, Any]]:

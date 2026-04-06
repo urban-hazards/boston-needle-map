@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 DATASET_CONFIG: dict[str, tuple[set[str], int]] = {
     "needles": (NEEDLE_TYPES, 2015),
     "encampments": (ENCAMPMENT_TYPES, ENCAMPMENT_START_YEAR),
-    "waste": (STREET_CLEANING_TYPES, 2015),
+    "waste": (STREET_CLEANING_TYPES, 2024),
 }
 
 ALL_DATASETS = list(DATASET_CONFIG.keys())
@@ -124,44 +124,68 @@ def _process_waste(raw_records: list[dict[str, Any]], force: bool) -> int:
 
     Returns the number of high-confidence waste matches.
     """
-    # Load description cache from S3
+    # Step 1: Classify on closure_reason first (fast, no API calls)
+    classifier = WasteClassifier()
+    initial_results = classifier.classify_batch(raw_records)
+
+    # Step 2: Identify records that need enrichment:
+    # - High/medium confidence matches (already have signal)
+    # - Records routed to INFO_HumanWaste queue (confirmed waste)
+    to_enrich: list[dict[str, Any]] = []
+    for rec, res in zip(raw_records, initial_results, strict=True):
+        queue = rec.get("queue", "")
+        if res.confidence in ("high", "medium") or "HumanWaste" in queue:
+            to_enrich.append(rec)
+
+    logger.info("Found %d records to enrich (matches + INFO_HumanWaste)", len(to_enrich))
+
+    # Step 3: Enrich only the targeted records via Open311
     description_cache: dict[str, str | None] = storage.read_json("enriched/descriptions.json") or {}
     logger.info("Loaded %d cached descriptions", len(description_cache))
 
-    # Enrich with Open311 descriptions
-    enriched_records, description_cache = enrich_records(raw_records, description_cache)
-
-    # Save updated cache
+    enriched_records, description_cache = enrich_records(to_enrich, description_cache)
     storage.write_json("enriched/descriptions.json", description_cache)
 
-    # Classify
-    classifier = WasteClassifier()
-    results = classifier.classify_batch(enriched_records)
+    # Step 4: Re-classify enriched records (descriptions may reveal more signal)
+    enriched_results = classifier.classify_batch(enriched_records)
 
-    # Save full classification results
-    storage.write_json("waste/classified.json", [asdict(r) for r in results])
+    # Step 5: Combine results — enriched matches + initial matches not in enriched set
+    enriched_ids = {str(r.get("case_enquiry_id")) for r in enriched_records}
+    all_matches: list[dict[str, Any]] = []
+    all_results = []
 
-    # Filter to high + medium confidence for dashboard
-    matches = [r for r in results if r.confidence in ("high", "medium")]
-    n_high = sum(1 for r in matches if r.confidence == "high")
-    n_medium = sum(1 for r in matches if r.confidence == "medium")
+    # Add enriched matches
+    for rec, res in zip(enriched_records, enriched_results, strict=True):
+        queue = rec.get("queue", "")
+        if res.confidence in ("high", "medium") or "HumanWaste" in queue:
+            all_matches.append(rec)
+            all_results.append(res)
+
+    # Add initial matches not already in enriched set
+    for rec, res in zip(raw_records, initial_results, strict=True):
+        cid = str(rec.get("case_enquiry_id", ""))
+        if cid not in enriched_ids and res.confidence in ("high", "medium"):
+            all_matches.append(rec)
+            all_results.append(res)
+
+    n_high = sum(1 for r in all_results if r.confidence == "high")
+    n_medium = sum(1 for r in all_results if r.confidence == "medium")
     logger.info(
         "Found %d waste matches (%d high, %d medium) out of %d records",
-        len(matches),
+        len(all_matches),
         n_high,
         n_medium,
-        len(results),
+        len(raw_records),
     )
 
-    # Build CleanedRecords from the matching raw records
-    match_ids = {r.case_id for r in matches}
-    matched_raw = [rec for rec in enriched_records if str(rec.get("case_enquiry_id", "")) in match_ids]
+    # Save full classification results
+    storage.write_json("waste/classified.json", [asdict(r) for r in all_results])
 
     cleaned: list[CleanedRecord] = []
-    for row in matched_raw:
-        rec = clean(row)
-        if rec is not None:
-            cleaned.append(rec)
+    for row in all_matches:
+        cleaned_rec = clean(row)
+        if cleaned_rec is not None:
+            cleaned.append(cleaned_rec)
 
     if not cleaned:
         logger.warning("No valid waste records after cleaning")

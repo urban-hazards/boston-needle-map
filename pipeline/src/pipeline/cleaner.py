@@ -2,20 +2,29 @@
 
 from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from dateutil import parser as dateutil_parser
 
 from pipeline.config import BOSTON_BBOX
 from pipeline.models import CleanedRecord
 
+# CKAN Analyze Boston timestamps are UTC with no timezone marker.
+# Confirmed by cross-referencing with Open311 API (which uses explicit Z suffix).
+_UTC = ZoneInfo("UTC")
+_EASTERN = ZoneInfo("America/New_York")
+
 
 def _parse_datetime(dt_str: str) -> datetime | None:
-    """Parse a datetime string using dateutil for robust format handling."""
+    """Parse a datetime string and convert from UTC to Eastern."""
     if not dt_str or not dt_str.strip():
         return None
     try:
         result: datetime = dateutil_parser.parse(dt_str)
-        return result
+        # CKAN dates have no tzinfo — treat as UTC, convert to Eastern
+        if result.tzinfo is None:
+            result = result.replace(tzinfo=_UTC)
+        return result.astimezone(_EASTERN)
     except (ValueError, OverflowError):
         return None
 

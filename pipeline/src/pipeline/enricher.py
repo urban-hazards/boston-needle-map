@@ -21,7 +21,7 @@ def fetch_open311_description(case_id: str) -> str | None:
             if isinstance(data, list) and data:
                 return data[0].get("description")  # type: ignore[no-any-return]
             elif isinstance(data, dict):
-                return data.get("description")  # type: ignore[no-any-return]
+                return data.get("description")
     except Exception:
         pass
     return None
