@@ -279,7 +279,9 @@ const rs = (wasteStats as Record<string, any>)?.routing_stats as
 					Timestamps don't include timezone information. The structured data appears
 					to be in UTC, but closure notes include Eastern time. Without conversion,
 					it looks like Boston's peak 311 reporting hour is 4 AM — which makes no sense.
-					After converting to Eastern, the peak shifts to late morning.
+					After converting to Eastern, the peak shifts to late morning. Our pipeline
+					now handles this conversion, but any downstream consumer of the raw data
+					who doesn't know about the offset will get wrong results.
 				</p>
 			</div>
 		</section>
