@@ -111,6 +111,8 @@ const description = `Interactive heatmap and analysis of ${formatNumber(stats.to
 				<p>
 					We currently display two datasets: <strong>sharps collection requests</strong> ({formatNumber(stats.total)} reports)
 					and <strong>encampment reports</strong> ({formatNumber(encampmentStats.total)} reports).
+					We also use <a href="/methodology">NLP classification</a> to detect <strong>human waste reports</strong> hidden
+					in street cleaning requests.
 					These are separate, unrelated complaint types that happen to be available through the same API.
 					We are not implying any correlation or causation between them — we're simply mapping the data
 					as the city provides it. As more geolocated 311 categories become available, we may add them.

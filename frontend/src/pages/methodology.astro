@@ -1,0 +1,828 @@
+---
+import Footer from "../components/Footer.astro"
+import Header from "../components/Header.astro"
+import BaseLayout from "../layouts/BaseLayout.astro"
+import { fetchPageStats } from "../lib/bucket"
+import "../styles/global.css"
+
+const stats = await fetchPageStats("needles")
+const wasteStats = await fetchPageStats("waste")
+
+const title = "Methodology — Boston Urban Hazard Maps"
+const description =
+	"How we use NLP to detect human waste reports hidden in Boston's 311 street cleaning data. Keyword scoring, false positive prevention, and validation results."
+---
+
+<BaseLayout title={title} description={description} canonical="https://www.urbanhazardmaps.com/methodology">
+	<Header generated={stats.generated} />
+
+	<main class="container" style="padding-top: 32px; padding-bottom: 48px;">
+		<nav class="breadcrumb" aria-label="Breadcrumb">
+			<a href="/">Home</a> <span aria-hidden="true">/</span> <span>Methodology</span>
+		</nav>
+
+		<h1 class="page-title">How We Detect Human Waste Reports</h1>
+		<p class="page-subtitle">
+			Boston's 311 system has no category for human waste. Reports get filed under
+			"Requests for Street Cleaning" alongside litter, leaves, and oil spills. We built
+			an NLP classifier to find them.
+		</p>
+
+		<section class="section" aria-label="The problem">
+			<h2 class="section-title">The Problem: No Category, No Routing, No Response</h2>
+			<div class="card prose">
+				<p>
+					Boston's 311 system has <strong>no category for human waste</strong>. When a
+					resident reports feces on a sidewalk, the app offers no matching option. Most
+					people select "Requests for Street Cleaning" — the closest available choice —
+					but reports also end up scattered across other ticket types with no consistent
+					routing. The majority land in the street cleaning queue alongside fallen leaves,
+					litter, and oil spills.
+				</p>
+				<p>
+					This creates a cascade of failures:
+				</p>
+				<ol>
+					<li>
+						<strong>Misrouted on intake</strong> — the ticket goes to street sweeping crews,
+						not a biohazard or public health team. Street sweeping is not equipped to handle
+						human waste safely.
+					</li>
+					<li>
+						<strong>Closed without action</strong> — city workers often close the ticket with
+						notes like <em>"bpw does not service human waste"</em> (BPW = Boston Public Works,
+						the department that handles street cleaning). The ticket is marked resolved in the
+						system, but nothing was actually cleaned up.
+					</li>
+					<li>
+						<strong>Invisible to the city</strong> — because there's no dedicated category,
+						the city has no count of how many human waste reports it receives, no way to
+						track response times for this specific issue, and no data to allocate resources.
+						The problem doesn't exist in their dashboards.
+					</li>
+				</ol>
+				<p>
+					The result: residents report a public health hazard, the system routes it to the
+					wrong department, that department closes it as out of scope, and the waste stays
+					on the sidewalk. Our classifier exists to make this invisible problem visible.
+				</p>
+				<p>
+					We process <strong>all</strong> street cleaning requests and use natural language
+					processing to identify which ones actually describe human waste, bodily fluids,
+					or biohazard conditions.
+				</p>
+			</div>
+		</section>
+
+		<section class="section" aria-label="The numbers">
+			<h2 class="section-title">By the Numbers: What Happens to Human Waste Reports</h2>
+			<div class="routing-stats">
+				<div class="routing-stat-card">
+					<div class="routing-stat-value" data-placeholder>TBD</div>
+					<div class="routing-stat-label">human waste reports identified in 311 tickets</div>
+				</div>
+				<div class="routing-arrow">→</div>
+				<div class="routing-stat-card routing-bad">
+					<div class="routing-stat-value" data-placeholder>TBD%</div>
+					<div class="routing-stat-label">closed by street sweeping as "not our job"</div>
+				</div>
+				<div class="routing-arrow">→</div>
+				<div class="routing-stat-card routing-worse">
+					<div class="routing-stat-value" data-placeholder>TBD%</div>
+					<div class="routing-stat-label">actually routed to a team that handles biohazards</div>
+				</div>
+			</div>
+			<div class="card prose" style="margin-top: 14px;">
+				<p>
+					Most residents who report human waste through 311 are submitting a ticket
+					into a system that has no path to resolve it. Whether it lands in street
+					cleaning or another category, there's no biohazard routing. A city worker
+					reads it, closes it because their department doesn't handle human waste,
+					and the ticket disappears into the "resolved" column — even though nothing
+					was cleaned up.
+				</p>
+				<p>
+					The small fraction of reports that <em>do</em> get handled typically
+					involve an outside contractor dispatch, which we can detect from closure
+					notes mentioning <em>"outside contractor"</em>. But this is the exception,
+					not the rule.
+				</p>
+				<!-- TODO: pipeline issue #38 — compute these stats from classified waste records -->
+			</div>
+
+			<h3 style="font-size: var(--fs-lg); margin: 24px 0 12px; padding-left: 12px; border-left: 3px solid #d4a017;">
+				Breakdown by Ticket Category
+			</h3>
+			<div class="category-grid">
+				<div class="category-card">
+					<div class="category-header">
+						<span class="category-name">Street Cleaning</span>
+						<span class="category-pct" data-placeholder>TBD%</span>
+					</div>
+					<p>Where most waste reports land. BPW closes these with
+						"does not service human waste." High closure rate, low resolution rate.</p>
+					<div class="stat-callout" style="margin-top: 8px;">
+						<div class="stat-callout-row">
+							<span class="stat-callout-label">Closed without action</span>
+							<span class="stat-callout-value" data-placeholder>TBD%</span>
+						</div>
+						<div class="stat-callout-row">
+							<span class="stat-callout-label">Contractor dispatched</span>
+							<span class="stat-callout-value" data-placeholder>TBD%</span>
+						</div>
+					</div>
+				</div>
+				<div class="category-card">
+					<div class="category-header">
+						<span class="category-name">Other Categories</span>
+						<span class="category-pct" data-placeholder>TBD%</span>
+					</div>
+					<p>Waste reports filed under other 311 types — code enforcement,
+						sanitation, general complaints, etc. These often get closed
+						even faster because the receiving department has no context
+						for biohazard handling.</p>
+					<div class="stat-callout" style="margin-top: 8px;">
+						<div class="stat-callout-row">
+							<span class="stat-callout-label">Closed without action</span>
+							<span class="stat-callout-value" data-placeholder>TBD%</span>
+						</div>
+						<div class="stat-callout-row">
+							<span class="stat-callout-label">Avg hours to closure</span>
+							<span class="stat-callout-value" data-placeholder>TBD</span>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- TODO: pipeline issue #38 — populate per-category closure stats -->
+		</section>
+
+		<section class="section" aria-label="How classification works">
+			<h2 class="section-title">How the Classifier Works</h2>
+			<div class="card prose">
+				<p>
+					We use <a href="https://spacy.io/" target="_blank" rel="noopener">spaCy</a>, an
+					open-source NLP library, to tokenize and lemmatize the text from each 311 record.
+					Lemmatization reduces words to their root form — "defecating" becomes "defecate",
+					"feces" stays "feces" — so we match meaning rather than exact spelling.
+				</p>
+				<p>
+					The classifier examines three text fields from each record: the
+					<strong>case title</strong>, the <strong>closure reason</strong> (added by city workers
+					when the ticket is resolved), and the <strong>Open311 description</strong> (the
+					original resident report, which is stripped from the public data export but available
+					through a separate API).
+				</p>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Scoring system">
+			<h2 class="section-title">Keyword Scoring</h2>
+			<div class="card prose">
+				<p>
+					Each record gets a confidence score from 0.0 to 1.0 based on weighted keyword matching
+					across four tiers:
+				</p>
+
+				<div class="tier-grid">
+					<div class="tier-card tier-high">
+						<div class="tier-header">
+							<span class="tier-badge high">High Signal</span>
+							<span class="tier-weight">+0.3 per term</span>
+						</div>
+						<p>
+							Words that almost certainly indicate human waste. Includes
+							<em>feces</em>, <em>fecal</em>, <em>excrement</em>, <em>biohazard</em>,
+							<em>defecate</em>, and common informal terms. Also catches intentional
+							misspellings.
+						</p>
+					</div>
+
+					<div class="tier-card tier-phrase">
+						<div class="tier-header">
+							<span class="tier-badge phrase">High Signal Phrases</span>
+							<span class="tier-weight">+0.4 per phrase</span>
+						</div>
+						<p>
+							Multi-word expressions matched as substrings: <em>"human waste"</em>,
+							<em>"bodily fluid"</em>, <em>"fecal matter"</em>, <em>"bio hazard"</em>,
+							<em>"outside contractor"</em> (which appears in city worker notes when
+							biohazard cleanup is dispatched).
+						</p>
+					</div>
+
+					<div class="tier-card tier-medium">
+						<div class="tier-header">
+							<span class="tier-badge medium">Medium Signal</span>
+							<span class="tier-weight">+0.1 to +0.2 per term</span>
+						</div>
+						<p>
+							Ambiguous terms that could mean human waste <em>or</em> something else:
+							<em>urine</em>, <em>vomit</em>, <em>sewage</em>, <em>stool</em>,
+							<em>soiled</em>. These score higher (+0.2) when context boosters are
+							present and no false positive flags exist.
+						</p>
+					</div>
+
+					<div class="tier-card tier-context">
+						<div class="tier-header">
+							<span class="tier-badge context">Context Boosters</span>
+							<span class="tier-weight">+0.05 per term</span>
+						</div>
+						<p>
+							Words that don't indicate waste on their own but strengthen the signal when
+							paired with other matches: <em>encampment</em>, <em>homeless</em>,
+							<em>needle</em>, <em>sidewalk</em>, <em>tent</em>, <em>contractor</em>.
+							Only counted when at least one other signal is present.
+						</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="section" aria-label="BPW rejection signal">
+			<h2 class="section-title">The BPW Rejection Signal</h2>
+			<div class="card prose">
+				<p>
+					One of our strongest signals is the phrase <em>"bpw does not service human waste"</em>,
+					which appears in closure notes when Boston Public Works (BPW) closes a ticket because
+					the reported issue falls outside their scope. This single phrase adds <strong>+0.8</strong>
+					to the score — nearly maxing it out — because it's the city's own workers confirming
+					the report describes human waste.
+				</p>
+				<p>
+					This phrase is evidence of the routing failure described above. The pattern is:
+				</p>
+				<ol>
+					<li>Resident submits report describing human waste</li>
+					<li>System routes it to BPW street cleaning</li>
+					<li>BPW worker reads it, closes ticket with "does not service human waste"</li>
+					<li>Ticket shows as "closed" in city data — appears resolved, but nothing was cleaned</li>
+				</ol>
+				<div class="stat-callout">
+					<div class="stat-callout-row">
+						<span class="stat-callout-label">Waste reports with BPW rejection</span>
+						<span class="stat-callout-value" data-placeholder>TBD%</span>
+					</div>
+					<div class="stat-callout-row">
+						<span class="stat-callout-label">Waste reports closed without biohazard dispatch</span>
+						<span class="stat-callout-value" data-placeholder>TBD%</span>
+					</div>
+					<div class="stat-callout-row">
+						<span class="stat-callout-label">Avg time to closure (without resolution)</span>
+						<span class="stat-callout-value" data-placeholder>TBD hrs</span>
+					</div>
+					<!-- TODO: compute these stats in the pipeline and surface via waste stats.json -->
+				</div>
+			</div>
+		</section>
+
+		<section class="section" aria-label="False positive prevention">
+			<h2 class="section-title">False Positive Prevention</h2>
+			<div class="card prose">
+				<p>
+					Many street cleaning requests mention waste from animals, not humans. Our
+					classifier uses a three-layer defense:
+				</p>
+				<ol>
+					<li>
+						<strong>False positive flags</strong> — terms like <em>dog</em>, <em>pet</em>,
+						<em>canine</em>, <em>animal</em>, <em>rat</em>, <em>restaurant</em>, and
+						<em>food inspection</em> are tracked separately.
+					</li>
+					<li>
+						<strong>Score reduction</strong> — when false positive flags are present,
+						medium-signal terms only add +0.02 instead of +0.1–0.2.
+					</li>
+					<li>
+						<strong>70% penalty</strong> — if false positive flags are found and there
+						are no explicit high-signal phrases or BPW rejection notes, the total score
+						is multiplied by 0.3 (a 70% reduction). This lets strong explicit signals
+						override animal context, while ambiguous cases get downgraded.
+					</li>
+				</ol>
+				<p>
+					For example, "dog poop on sidewalk" would match <em>poop</em> (high signal) and
+					<em>sidewalk</em> (context booster), but also <em>dog</em> (false positive). The
+					70% penalty brings the score low enough to filter it out, while "human feces on
+					sidewalk" has no false positive flags and scores high.
+				</p>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Confidence levels">
+			<h2 class="section-title">Confidence Levels</h2>
+			<div class="card prose">
+				<div class="confidence-table-wrap">
+					<table class="confidence-table">
+						<thead>
+							<tr>
+								<th>Level</th>
+								<th>Score</th>
+								<th>Meaning</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><span class="conf-badge conf-high">High</span></td>
+								<td>&ge; 0.6</td>
+								<td>
+									Strong match — explicit waste terms, BPW rejection, or multiple
+									confirming signals. Displayed on the map by default.
+								</td>
+							</tr>
+							<tr>
+								<td><span class="conf-badge conf-medium">Medium</span></td>
+								<td>&ge; 0.3</td>
+								<td>
+									Likely match — medium-signal terms with context boosters, or
+									a single high-signal term without false positive flags.
+								</td>
+							</tr>
+							<tr>
+								<td><span class="conf-badge conf-low">Low</span></td>
+								<td>&gt; 0.0</td>
+								<td>
+									Possible match — weak signals, ambiguous terms, or high-signal
+									terms with animal context. Not shown on the map.
+								</td>
+							</tr>
+							<tr>
+								<td><span class="conf-badge conf-none">None</span></td>
+								<td>0.0</td>
+								<td>No waste-related language detected.</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<p>
+					The map currently shows records classified as <strong>high</strong> and
+					<strong>medium</strong> confidence ({wasteStats.total.toLocaleString()} records).
+					This is a conservative threshold — we prefer missing some real cases over
+					showing false positives.
+				</p>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Validation">
+			<h2 class="section-title">Validation</h2>
+			<div class="card prose">
+				<p>
+					We validated the classifier against a manually labeled dataset:
+				</p>
+				<ul>
+					<li>
+						<strong>98% recall</strong> on 50 confirmed human waste cases — the classifier
+						correctly identified 49 out of 50.
+					</li>
+					<li>
+						<strong>0 false positives</strong> across 32,000+ street cleaning records from
+						the test period.
+					</li>
+					<li>
+						<strong>1 known miss</strong>: a record containing "Human faces" (likely a typo
+						for "human feces") was not caught because the misspelling didn't match any
+						keyword tier.
+					</li>
+				</ul>
+				<p>
+					The classifier is conservative by design. We would rather undercount than overcount,
+					because false positives undermine trust in civic data. As we discover new patterns
+					or edge cases, we update the keyword lists and re-process the full dataset.
+				</p>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Open source">
+			<h2 class="section-title">Open Source</h2>
+			<div class="card prose">
+				<p>
+					The full classifier code is open source under the MIT license. You can review the
+					keyword lists, scoring logic, and false positive handling in the
+					<a
+						href="https://github.com/urban-hazards/urban-hazard-maps/tree/main/pipeline/src/pipeline"
+						target="_blank"
+						rel="noopener"
+					>pipeline source code</a>:
+				</p>
+				<ul>
+					<li>
+						<a
+							href="https://github.com/urban-hazards/urban-hazard-maps/blob/main/pipeline/src/pipeline/classifier.py"
+							target="_blank"
+							rel="noopener"
+						><code>classifier.py</code></a> — spaCy tokenization, scoring logic, false positive handling
+					</li>
+					<li>
+						<a
+							href="https://github.com/urban-hazards/urban-hazard-maps/blob/main/pipeline/src/pipeline/config.py"
+							target="_blank"
+							rel="noopener"
+						><code>config.py</code></a> — keyword tiers, phrases, and threshold values
+					</li>
+				</ul>
+				<p>
+					If you find a misclassified record or have suggestions for improving the keyword
+					lists, please <a
+						href="https://github.com/urban-hazards/urban-hazard-maps/issues"
+						target="_blank"
+						rel="noopener"
+					>open an issue</a> on GitHub.
+				</p>
+			</div>
+		</section>
+
+		<div style="text-align: center; margin-top: 32px;">
+			<a href="/" class="back-link">&larr; Back to the map</a>
+		</div>
+	</main>
+
+	<Footer />
+</BaseLayout>
+
+<style>
+	.breadcrumb {
+		font-size: var(--fs-sm);
+		color: var(--color-text-muted);
+		margin-bottom: var(--sp-md);
+	}
+
+	.breadcrumb a {
+		color: var(--color-blue);
+	}
+
+	.breadcrumb span {
+		margin: 0 4px;
+	}
+
+	.page-title {
+		font-size: var(--fs-2xl);
+		margin-bottom: 8px;
+		position: relative;
+		padding-bottom: 16px;
+	}
+
+	.page-title::after {
+		content: "";
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 60px;
+		height: 3px;
+		background: var(--color-accent);
+		border-radius: 2px;
+	}
+
+	.page-subtitle {
+		font-size: var(--fs-md);
+		line-height: 1.7;
+		color: var(--color-text-muted);
+		margin-bottom: var(--sp-xl);
+		max-width: 900px;
+	}
+
+	.prose {
+		line-height: 1.8;
+		font-size: var(--fs-base);
+		color: var(--color-text-muted);
+		border-left: 3px solid var(--color-teal);
+	}
+
+	.prose p {
+		margin-bottom: 14px;
+	}
+
+	.prose p:last-child {
+		margin-bottom: 0;
+	}
+
+	.prose ol,
+	.prose ul {
+		margin: 12px 0;
+		padding-left: 24px;
+	}
+
+	.prose li {
+		margin-bottom: 8px;
+	}
+
+	.prose em {
+		background: var(--color-accent-light);
+		padding: 1px 4px;
+		border-radius: 3px;
+		font-style: normal;
+		font-size: var(--fs-sm);
+		font-family: monospace;
+	}
+
+	.prose code {
+		background: var(--color-surface-alt);
+		border: 1px solid var(--color-border-light);
+		padding: 1px 5px;
+		border-radius: 3px;
+		font-size: var(--fs-sm);
+	}
+
+	.tier-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 14px;
+		margin: 16px 0;
+	}
+
+	.tier-card {
+		border: 1px solid var(--color-border-light);
+		border-radius: var(--radius-sm);
+		padding: 14px;
+		background: var(--color-surface-alt);
+	}
+
+	.tier-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 8px;
+	}
+
+	.tier-badge {
+		font-size: var(--fs-xs);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		padding: 2px 8px;
+		border-radius: 3px;
+	}
+
+	.tier-badge.high {
+		background: #fde8e8;
+		color: #c0392b;
+	}
+
+	.tier-badge.phrase {
+		background: #fde8e8;
+		color: #a93226;
+	}
+
+	.tier-badge.medium {
+		background: #fef3cd;
+		color: #856404;
+	}
+
+	.tier-badge.context {
+		background: #d4edda;
+		color: #155724;
+	}
+
+	.tier-weight {
+		font-size: var(--fs-xs);
+		color: var(--color-text-light);
+		font-weight: 600;
+	}
+
+	.tier-card p {
+		font-size: var(--fs-sm);
+		line-height: 1.6;
+		margin: 0;
+	}
+
+	.confidence-table-wrap {
+		overflow-x: auto;
+		margin: 12px 0;
+	}
+
+	.confidence-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: var(--fs-sm);
+	}
+
+	.confidence-table th {
+		text-align: left;
+		font-weight: 700;
+		font-size: var(--fs-xs);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--color-text-light);
+		padding: 8px 12px;
+		border-bottom: 2px solid var(--color-border);
+	}
+
+	.confidence-table td {
+		padding: 10px 12px;
+		border-bottom: 1px solid var(--color-border-light);
+		vertical-align: top;
+	}
+
+	.conf-badge {
+		display: inline-block;
+		font-size: var(--fs-xs);
+		font-weight: 700;
+		padding: 2px 8px;
+		border-radius: 3px;
+	}
+
+	.conf-high {
+		background: #d4edda;
+		color: #155724;
+	}
+
+	.conf-medium {
+		background: #fef3cd;
+		color: #856404;
+	}
+
+	.conf-low {
+		background: #f8d7da;
+		color: #721c24;
+	}
+
+	.conf-none {
+		background: #e9ecef;
+		color: #6c757d;
+	}
+
+	.back-link {
+		display: inline-block;
+		font-size: var(--fs-base);
+		color: var(--color-blue);
+		padding: 8px 20px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		transition:
+			background var(--transition),
+			border-color var(--transition);
+	}
+
+	.back-link:hover {
+		background: var(--color-blue-light);
+		border-color: var(--color-blue);
+		text-decoration: none;
+	}
+
+	.routing-stats {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
+
+	.routing-stat-card {
+		flex: 1;
+		min-width: 160px;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		padding: 20px 16px;
+		text-align: center;
+		box-shadow: var(--shadow-sm);
+	}
+
+	.routing-stat-card.routing-bad {
+		border-color: #e0a800;
+		background: #fffbf0;
+	}
+
+	.routing-stat-card.routing-worse {
+		border-color: #c0392b;
+		background: #fef5f5;
+	}
+
+	.routing-stat-value {
+		font-size: 36px;
+		font-weight: 700;
+		color: var(--color-accent);
+		line-height: 1;
+		margin-bottom: 8px;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.routing-stat-card.routing-bad .routing-stat-value {
+		color: #d4a017;
+	}
+
+	.routing-stat-card.routing-worse .routing-stat-value {
+		color: #c0392b;
+	}
+
+	.routing-stat-value[data-placeholder] {
+		color: var(--color-text-light);
+		font-style: italic;
+		font-size: 28px;
+	}
+
+	.routing-stat-label {
+		font-size: var(--fs-sm);
+		color: var(--color-text-muted);
+		line-height: 1.4;
+	}
+
+	.routing-arrow {
+		font-size: 24px;
+		color: var(--color-text-light);
+		font-weight: 700;
+	}
+
+	.category-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 14px;
+	}
+
+	.category-card {
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		padding: 16px;
+		box-shadow: var(--shadow-sm);
+		font-size: var(--fs-sm);
+		color: var(--color-text-muted);
+		line-height: 1.6;
+	}
+
+	.category-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 8px;
+	}
+
+	.category-name {
+		font-weight: 700;
+		font-size: var(--fs-base);
+		color: var(--color-text);
+	}
+
+	.category-pct {
+		font-size: var(--fs-lg);
+		font-weight: 700;
+		color: var(--color-accent);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.category-pct[data-placeholder] {
+		color: var(--color-text-light);
+		font-style: italic;
+		font-weight: 400;
+		font-size: var(--fs-base);
+	}
+
+	.stat-callout {
+		background: var(--color-surface-alt);
+		border: 1px solid var(--color-border-light);
+		border-radius: var(--radius-sm);
+		padding: 14px 16px;
+		margin: 14px 0 4px;
+	}
+
+	.stat-callout-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 6px 0;
+		border-bottom: 1px solid var(--color-border-light);
+	}
+
+	.stat-callout-row:last-child {
+		border-bottom: none;
+	}
+
+	.stat-callout-label {
+		font-size: var(--fs-sm);
+		color: var(--color-text-muted);
+	}
+
+	.stat-callout-value {
+		font-size: var(--fs-base);
+		font-weight: 700;
+		color: var(--color-text);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.stat-callout-value[data-placeholder] {
+		color: var(--color-text-light);
+		font-style: italic;
+		font-weight: 400;
+	}
+
+	@media (max-width: 768px) {
+		.tier-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.category-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.routing-stats {
+			flex-direction: column;
+		}
+
+		.routing-arrow {
+			transform: rotate(90deg);
+		}
+
+		.page-title {
+			font-size: 22px;
+		}
+	}
+</style>
