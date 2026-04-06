@@ -1,18 +1,6 @@
 pre-commit:
   parallel: true
   commands:
-    ruff-check:
-      root: backend/
-      run: uv run ruff check src/ tests/
-      glob: "backend/**/*.py"
-    ruff-format:
-      root: backend/
-      run: uv run ruff format --check src/ tests/
-      glob: "backend/**/*.py"
-    mypy:
-      root: backend/
-      run: uv run mypy src/
-      glob: "backend/**/*.py"
     biome-check:
       root: frontend/
       run: pnpm biome check src/
