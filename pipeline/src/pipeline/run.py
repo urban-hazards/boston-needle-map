@@ -119,6 +119,75 @@ def _process_dataset(dataset: str, raw_records: list[dict[str, Any]]) -> int:
     return len(cleaned)
 
 
+def _compute_routing_stats(
+    matches: list[dict[str, Any]],
+    results: list[Any],
+) -> dict[str, Any]:
+    """Compute routing/closure stats for waste reports.
+
+    Analyzes closure reasons to determine what happened to each report:
+    - BPW rejection ("bpw does not service human waste")
+    - Contractor dispatch ("outside contractor" in closure)
+    - Closed without waste-specific action (everything else)
+    """
+
+    total = len(matches)
+    if total == 0:
+        return {"total_classified": 0}
+
+    bpw_count = sum(1 for r in results if r.bpw_rejection)
+    contractor_count = 0
+    closed_no_action = 0
+
+    for _rec, res in zip(matches, results, strict=True):
+        all_text = " ".join(res.source_texts.values()).lower()
+
+        if "outside contractor" in all_text or "contractor dispatched" in all_text:
+            contractor_count += 1
+        elif not res.bpw_rejection:
+            closed_no_action += 1
+
+    # Response times: split by contractor-dispatched vs not
+    resp_hrs_dispatched: list[float] = []
+    resp_hrs_no_action: list[float] = []
+    for rec, res in zip(matches, results, strict=True):
+        closed_dt = rec.get("closed_dt") or rec.get("CLOSED_DT")
+        open_dt = rec.get("open_dt") or rec.get("OPEN_DT")
+        if not closed_dt or not open_dt:
+            continue
+        try:
+            from dateutil import parser as dp
+
+            opened = dp.parse(open_dt)
+            closed = dp.parse(closed_dt)
+            hrs = round((closed - opened).total_seconds() / 3600, 1)
+            if hrs < 0:
+                continue
+        except (ValueError, OverflowError):
+            continue
+
+        all_text = " ".join(res.source_texts.values()).lower()
+        if "outside contractor" in all_text or "contractor dispatched" in all_text:
+            resp_hrs_dispatched.append(hrs)
+        else:
+            resp_hrs_no_action.append(hrs)
+
+    def _avg(vals: list[float]) -> float | None:
+        return round(sum(vals) / len(vals), 1) if vals else None
+
+    return {
+        "total_classified": total,
+        "bpw_rejection_count": bpw_count,
+        "bpw_rejection_pct": round(bpw_count / total * 100, 1),
+        "contractor_dispatch_count": contractor_count,
+        "contractor_dispatch_pct": round(contractor_count / total * 100, 1),
+        "closed_no_action_count": closed_no_action,
+        "closed_no_action_pct": round(closed_no_action / total * 100, 1),
+        "avg_hrs_no_action": _avg(resp_hrs_no_action),
+        "avg_hrs_dispatched": _avg(resp_hrs_dispatched),
+    }
+
+
 def _process_waste(raw_records: list[dict[str, Any]], force: bool) -> int:
     """Classify street cleaning records for human waste, enrich, compute stats.
 
@@ -181,6 +250,15 @@ def _process_waste(raw_records: list[dict[str, Any]], force: bool) -> int:
     # Save full classification results
     storage.write_json("waste/classified.json", [asdict(r) for r in all_results])
 
+    # Compute routing/closure stats
+    routing_stats = _compute_routing_stats(all_matches, all_results)
+    logger.info(
+        "Routing stats: %d%% no action, %d%% contractor, %d%% BPW rejection",
+        round(routing_stats.get("closed_no_action_pct", 0)),
+        round(routing_stats.get("contractor_dispatch_pct", 0)),
+        round(routing_stats.get("bpw_rejection_pct", 0)),
+    )
+
     cleaned: list[CleanedRecord] = []
     for row in all_matches:
         cleaned_rec = clean(row)
@@ -207,6 +285,7 @@ def _process_waste(raw_records: list[dict[str, Any]], force: bool) -> int:
         "peak_dow": stats.peak_dow,
         "avg_monthly": stats.avg_monthly,
         "initial_heat": stats.heat_keys.get("all", []),
+        "routing_stats": routing_stats,
     }
 
     storage.write_json("waste/stats.json", page_stats)

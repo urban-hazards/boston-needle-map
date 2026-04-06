@@ -7,6 +7,7 @@ import "../styles/global.css"
 
 const stats = await fetchPageStats("needles")
 const wasteStats = await fetchPageStats("waste")
+const rs = wasteStats.routing_stats
 
 const title = "Methodology — Boston Urban Hazard Maps"
 const description =
@@ -79,18 +80,18 @@ const description =
 			<h2 class="section-title">By the Numbers: What Happens to Human Waste Reports</h2>
 			<div class="routing-stats">
 				<div class="routing-stat-card">
-					<div class="routing-stat-value" data-placeholder>TBD</div>
+					<div class="routing-stat-value">{rs ? rs.total_classified.toLocaleString() : "—"}</div>
 					<div class="routing-stat-label">human waste reports identified in 311 tickets</div>
 				</div>
 				<div class="routing-arrow">→</div>
 				<div class="routing-stat-card routing-bad">
-					<div class="routing-stat-value" data-placeholder>TBD%</div>
+					<div class="routing-stat-value">{rs ? `${rs.closed_no_action_pct}%` : "—"}</div>
 					<div class="routing-stat-label">closed — street sweeping has no reroute option for biohazards</div>
 				</div>
 				<div class="routing-arrow">→</div>
 				<div class="routing-stat-card routing-worse">
-					<div class="routing-stat-value" data-placeholder>TBD%</div>
-					<div class="routing-stat-label">actually routed to a team that handles biohazards</div>
+					<div class="routing-stat-value">{rs ? `${rs.contractor_dispatch_pct}%` : "—"}</div>
+					<div class="routing-stat-label">actually routed to a contractor for cleanup</div>
 				</div>
 			</div>
 			<div class="card prose" style="margin-top: 14px;">
@@ -117,44 +118,34 @@ const description =
 			<div class="category-grid">
 				<div class="category-card">
 					<div class="category-header">
-						<span class="category-name">Street Cleaning</span>
-						<span class="category-pct" data-placeholder>TBD%</span>
+						<span class="category-name">All Identified Waste Reports</span>
 					</div>
 					<p>Where most waste reports land. BPW can't handle biohazards and
 						has no option to reroute — tickets are closed as out-of-scope.</p>
 					<div class="stat-callout" style="margin-top: 8px;">
 						<div class="stat-callout-row">
-							<span class="stat-callout-label">Closed without action</span>
-							<span class="stat-callout-value" data-placeholder>TBD%</span>
+							<span class="stat-callout-label">BPW rejection ("not our job")</span>
+							<span class="stat-callout-value">{rs ? `${rs.bpw_rejection_count} (${rs.bpw_rejection_pct}%)` : "—"}</span>
 						</div>
 						<div class="stat-callout-row">
 							<span class="stat-callout-label">Contractor dispatched</span>
-							<span class="stat-callout-value" data-placeholder>TBD%</span>
+							<span class="stat-callout-value">{rs ? `${rs.contractor_dispatch_count} (${rs.contractor_dispatch_pct}%)` : "—"}</span>
 						</div>
-					</div>
-				</div>
-				<div class="category-card">
-					<div class="category-header">
-						<span class="category-name">Other Categories</span>
-						<span class="category-pct" data-placeholder>TBD%</span>
-					</div>
-					<p>Waste reports filed under other 311 types — code enforcement,
-						sanitation, general complaints, etc. These often get closed
-						even faster because the receiving department has no context
-						for biohazard handling.</p>
-					<div class="stat-callout" style="margin-top: 8px;">
 						<div class="stat-callout-row">
 							<span class="stat-callout-label">Closed without action</span>
-							<span class="stat-callout-value" data-placeholder>TBD%</span>
+							<span class="stat-callout-value">{rs ? `${rs.closed_no_action_count} (${rs.closed_no_action_pct}%)` : "—"}</span>
 						</div>
 						<div class="stat-callout-row">
-							<span class="stat-callout-label">Avg hours to closure</span>
-							<span class="stat-callout-value" data-placeholder>TBD</span>
+							<span class="stat-callout-label">Avg hours to closure (no action)</span>
+							<span class="stat-callout-value">{rs?.avg_hrs_no_action != null ? `${rs.avg_hrs_no_action} hrs` : "—"}</span>
+						</div>
+						<div class="stat-callout-row">
+							<span class="stat-callout-label">Avg hours to closure (dispatched)</span>
+							<span class="stat-callout-value">{rs?.avg_hrs_dispatched != null ? `${rs.avg_hrs_dispatched} hrs` : "—"}</span>
 						</div>
 					</div>
 				</div>
 			</div>
-			<!-- TODO: pipeline issue #38 — populate per-category closure stats -->
 		</section>
 
 		<section class="section" aria-label="How classification works">
@@ -262,17 +253,16 @@ const description =
 				<div class="stat-callout">
 					<div class="stat-callout-row">
 						<span class="stat-callout-label">Waste reports with BPW rejection</span>
-						<span class="stat-callout-value" data-placeholder>TBD%</span>
+						<span class="stat-callout-value">{rs ? `${rs.bpw_rejection_pct}%` : "—"}</span>
 					</div>
 					<div class="stat-callout-row">
 						<span class="stat-callout-label">Waste reports closed without biohazard dispatch</span>
-						<span class="stat-callout-value" data-placeholder>TBD%</span>
+						<span class="stat-callout-value">{rs ? `${rs.closed_no_action_pct}%` : "—"}</span>
 					</div>
 					<div class="stat-callout-row">
 						<span class="stat-callout-label">Avg time to closure (without resolution)</span>
-						<span class="stat-callout-value" data-placeholder>TBD hrs</span>
+						<span class="stat-callout-value">{rs?.avg_hrs_no_action != null ? `${rs.avg_hrs_no_action} hrs` : "—"}</span>
 					</div>
-					<!-- TODO: compute these stats in the pipeline and surface via waste stats.json -->
 				</div>
 			</div>
 		</section>
