@@ -112,6 +112,7 @@ export default function HeatMap({
 	const [ready, setReady] = useState(false)
 	const [isMobile, setIsMobile] = useState(false)
 	const [filterOpen, setFilterOpen] = useState(false)
+	const [showPins, setShowPins] = useState(true)
 
 	const activeYears =
 		dataLayer === "encampments" ? encampmentYears : dataLayer === "waste" ? wasteYears : years
@@ -187,14 +188,18 @@ export default function HeatMap({
 		}
 	}, [])
 
+	function removeAllMarkers(map: L.Map) {
+		if (markerGroupRef.current) map.removeLayer(markerGroupRef.current)
+		if (encampmentMarkerGroupRef.current) map.removeLayer(encampmentMarkerGroupRef.current)
+		if (wasteMarkerGroupRef.current) map.removeLayer(wasteMarkerGroupRef.current)
+	}
+
 	function handleZoom(map: L.Map) {
 		const zoom = map.getZoom()
-		if (zoom >= 15) {
+		if (zoom >= 15 && showPins) {
 			rebuildMarkers(map)
 		} else {
-			if (markerGroupRef.current) map.removeLayer(markerGroupRef.current)
-			if (encampmentMarkerGroupRef.current) map.removeLayer(encampmentMarkerGroupRef.current)
-			if (wasteMarkerGroupRef.current) map.removeLayer(wasteMarkerGroupRef.current)
+			removeAllMarkers(map)
 		}
 	}
 
@@ -284,9 +289,17 @@ export default function HeatMap({
 		}
 	}
 
-	function loadMarkers(map: L.Map) {
-		rebuildMarkers(map)
-	}
+	// Toggle marker pins on/off
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency on showPins
+	useEffect(() => {
+		if (!ready || !mapInstance.current) return
+		const map = mapInstance.current
+		if (showPins && map.getZoom() >= 15) {
+			rebuildMarkers(map)
+		} else {
+			removeAllMarkers(map)
+		}
+	}, [showPins, ready])
 
 	// Update layers when dataLayer changes
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency on dataLayer
@@ -334,8 +347,8 @@ export default function HeatMap({
 			setWasteCount(wastePoints.filter(([, , yr]) => String(yr) === defaultYear).length)
 		}
 
-		// Re-show markers if zoomed in (with reset "all" filters since we just reset them)
-		if (map.getZoom() >= 15) {
+		// Re-show markers if zoomed in and pins enabled
+		if (showPins && map.getZoom() >= 15) {
 			rebuildMarkers(map)
 		}
 	}, [dataLayer, ready])
@@ -493,45 +506,57 @@ export default function HeatMap({
 							/>
 						</div>
 
-						<div style={{ marginBottom: 10 }}>
-							<div style={filterLabelStyle}>Year</div>
-							<FilterRadio
-								name="yr"
-								value="all"
-								label="All Years"
-								checked={selYear === "all"}
-								onChange={setSelYear}
+						<label
+							style={{
+								display: "flex",
+								alignItems: "center",
+								gap: 6,
+								padding: "4px 0 8px",
+								cursor: "pointer",
+								fontSize: "12px",
+								color: "#555",
+								borderBottom: "1px solid rgba(0,0,0,0.06)",
+								marginBottom: 10,
+							}}
+						>
+							<input
+								type="checkbox"
+								checked={showPins}
+								onChange={(e) => setShowPins(e.target.checked)}
+								style={{ cursor: "pointer", accentColor: "#e85a1b" }}
 							/>
-							{activeYears.map((yr) => (
-								<FilterRadio
-									key={yr}
-									name="yr"
-									value={String(yr)}
-									label={String(yr)}
-									checked={selYear === String(yr)}
-									onChange={setSelYear}
-								/>
-							))}
+							Show pins when zoomed in
+						</label>
+
+						<div style={{ marginBottom: 8 }}>
+							<div style={filterLabelStyle}>Year</div>
+							<select
+								value={selYear}
+								onChange={(e) => setSelYear(e.target.value)}
+								style={selectStyle}
+							>
+								<option value="all">All Years</option>
+								{activeYears.map((yr) => (
+									<option key={yr} value={String(yr)}>
+										{yr}
+									</option>
+								))}
+							</select>
 						</div>
 						<div>
 							<div style={filterLabelStyle}>Month</div>
-							<FilterRadio
-								name="mo"
-								value="0"
-								label="All Months"
-								checked={selMonth === 0}
-								onChange={(v) => setSelMonth(Number(v))}
-							/>
-							{MONTHS.map((name, i) => (
-								<FilterRadio
-									key={name}
-									name="mo"
-									value={String(i + 1)}
-									label={name}
-									checked={selMonth === i + 1}
-									onChange={(v) => setSelMonth(Number(v))}
-								/>
-							))}
+							<select
+								value={selMonth}
+								onChange={(e) => setSelMonth(Number(e.target.value))}
+								style={selectStyle}
+							>
+								<option value={0}>All Months</option>
+								{MONTHS.map((name, i) => (
+									<option key={name} value={i + 1}>
+										{name}
+									</option>
+								))}
+							</select>
 						</div>
 					</div>
 				)}
@@ -657,6 +682,17 @@ function filterPanelStyle(mobile: boolean): React.CSSProperties {
 	}
 }
 
+const selectStyle: React.CSSProperties = {
+	width: "100%",
+	padding: "5px 8px",
+	fontSize: "13px",
+	border: "1px solid #ddd",
+	borderRadius: "4px",
+	background: "#fff",
+	color: "#333",
+	cursor: "pointer",
+}
+
 const filterLabelStyle: React.CSSProperties = {
 	fontWeight: 700,
 	fontSize: "11px",
@@ -664,44 +700,6 @@ const filterLabelStyle: React.CSSProperties = {
 	textTransform: "uppercase",
 	letterSpacing: "0.05em",
 	marginBottom: 5,
-}
-
-function FilterRadio({
-	name,
-	value,
-	label,
-	checked,
-	onChange,
-}: {
-	name: string
-	value: string
-	label: string
-	checked: boolean
-	onChange: (v: string) => void
-}) {
-	return (
-		<label
-			style={{
-				display: "flex",
-				alignItems: "center",
-				gap: 6,
-				padding: "2px 0",
-				cursor: "pointer",
-				color: checked ? "#e85a1b" : "#333",
-				fontSize: "13px",
-			}}
-		>
-			<input
-				type="radio"
-				name={name}
-				value={value}
-				checked={checked}
-				onChange={() => onChange(value)}
-				style={{ cursor: "pointer", accentColor: "#e85a1b" }}
-			/>
-			{label}
-		</label>
-	)
 }
 
 function LayerRadio({
