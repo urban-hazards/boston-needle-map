@@ -62,7 +62,7 @@ export default function HourlyChart({ hourly }: HourlyChartProps) {
 		<div className="card" style={{ padding: "20px 20px 16px" }}>
 			<div className="card-title">Requests by Hour of Day</div>
 			<div style={{ padding: "4px 0" }}>
-				<canvas ref={canvasRef} height={120} />
+				<canvas ref={canvasRef} height={120} aria-label="Requests by hour of day bar chart" />
 			</div>
 		</div>
 	)
