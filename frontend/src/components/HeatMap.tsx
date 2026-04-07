@@ -20,32 +20,32 @@ interface HeatMapProps {
 
 const NEEDLE_GRADIENT: Record<number, string> = {
 	0.0: "rgba(0,0,0,0)",
-	0.12: "rgba(0,170,68,0.3)",
-	0.3: "rgba(0,204,0,0.4)",
-	0.5: "rgba(255,255,0,0.5)",
-	0.7: "rgba(255,136,0,0.55)",
-	0.88: "rgba(220,30,0,0.6)",
-	1.0: "rgba(150,0,0,0.65)",
+	0.12: "rgba(0,170,68,0.15)",
+	0.3: "rgba(0,204,0,0.2)",
+	0.5: "rgba(255,255,0,0.25)",
+	0.7: "rgba(255,136,0,0.3)",
+	0.88: "rgba(220,30,0,0.32)",
+	1.0: "rgba(150,0,0,0.35)",
 }
 
 const ENCAMPMENT_GRADIENT: Record<number, string> = {
 	0.0: "rgba(0,0,0,0)",
-	0.12: "rgba(60,60,180,0.25)",
-	0.3: "rgba(80,80,220,0.35)",
-	0.5: "rgba(120,60,220,0.45)",
-	0.7: "rgba(160,40,200,0.5)",
-	0.88: "rgba(180,20,160,0.55)",
-	1.0: "rgba(140,10,120,0.6)",
+	0.12: "rgba(60,60,180,0.18)",
+	0.3: "rgba(80,80,220,0.25)",
+	0.5: "rgba(120,60,220,0.32)",
+	0.7: "rgba(160,40,200,0.35)",
+	0.88: "rgba(180,20,160,0.38)",
+	1.0: "rgba(140,10,120,0.42)",
 }
 
 const WASTE_GRADIENT: Record<number, string> = {
 	0.0: "rgba(0,0,0,0)",
-	0.12: "rgba(100,60,20,0.25)",
-	0.3: "rgba(140,80,20,0.35)",
-	0.5: "rgba(180,120,30,0.45)",
-	0.7: "rgba(160,100,20,0.5)",
-	0.88: "rgba(120,70,10,0.55)",
-	1.0: "rgba(90,50,10,0.6)",
+	0.12: "rgba(100,60,20,0.18)",
+	0.3: "rgba(140,80,20,0.25)",
+	0.5: "rgba(180,120,30,0.32)",
+	0.7: "rgba(160,100,20,0.35)",
+	0.88: "rgba(120,70,10,0.38)",
+	1.0: "rgba(90,50,10,0.42)",
 }
 
 type DataLayer = "needles" | "encampments" | "waste" | "both"
@@ -65,30 +65,13 @@ const MONTHS = [
 	"December",
 ]
 
-function filterAndBin(
-	points: number[][],
-	year: string,
-	month: number,
-	binSize = 0.0008,
-): number[][] {
+function filterPoints(points: number[][], year: string, month: number): number[][] {
 	const filtered = points.filter(([, , yr, mo]) => {
 		if (year !== "all" && yr !== Number(year)) return false
 		if (month !== 0 && mo !== month) return false
 		return true
 	})
-
-	const grid = new Map<string, number>()
-	for (const [lat, lng] of filtered) {
-		const bLat = Math.round(lat / binSize) * binSize
-		const bLng = Math.round(lng / binSize) * binSize
-		const key = `${bLat.toFixed(6)},${bLng.toFixed(6)}`
-		grid.set(key, (grid.get(key) || 0) + 1)
-	}
-
-	return Array.from(grid.entries()).map(([key, count]) => {
-		const [lat, lng] = key.split(",").map(Number)
-		return [lat, lng, count]
-	})
+	return filtered.map(([lat, lng]) => [lat, lng, 1])
 }
 
 export default function HeatMap({
@@ -101,8 +84,6 @@ export default function HeatMap({
 	years,
 	encampmentYears,
 	wasteYears,
-	total,
-	encampmentTotal,
 	wasteTotal,
 }: HeatMapProps) {
 	const mapRef = useRef<HTMLDivElement>(null)
@@ -114,11 +95,19 @@ export default function HeatMap({
 	const encampmentMarkerGroupRef = useRef<L.LayerGroup | null>(null)
 	const wasteMarkerGroupRef = useRef<L.LayerGroup | null>(null)
 
-	const [selYear, setSelYear] = useState("all")
+	const defaultYear = String(years[years.length - 1] || "all")
+	const [selYear, setSelYear] = useState(defaultYear)
 	const [selMonth, setSelMonth] = useState(0)
 	const [dataLayer, setDataLayer] = useState<DataLayer>("both")
-	const [count, setCount] = useState(total)
-	const [encampmentCount, setEncampmentCount] = useState(encampmentTotal)
+	const dataLayerRef = useRef<DataLayer>("both")
+	const selYearRef = useRef(defaultYear)
+	const selMonthRef = useRef(0)
+	const [count, setCount] = useState(
+		() => needlePoints.filter(([, , yr]) => String(yr) === defaultYear).length,
+	)
+	const [encampmentCount, setEncampmentCount] = useState(
+		() => encampmentPoints.filter(([, , yr]) => String(yr) === defaultYear).length,
+	)
 	const [wasteCount, setWasteCount] = useState(wasteTotal)
 	const [ready, setReady] = useState(false)
 	const [isMobile, setIsMobile] = useState(false)
@@ -167,13 +156,13 @@ export default function HeatMap({
 				maxZoom: 19,
 			}).addTo(map)
 
-			// Both heat layers on by default
-			const needleBinned = filterAndBin(needlePoints, "all", 0)
+			// Both heat layers on by default, filtered to latest year
+			const needleBinned = filterPoints(needlePoints, defaultYear, 0)
 			const needleLayer = createHeatLayer(needleBinned, NEEDLE_GRADIENT)
 			needleLayer.addTo(map)
 			heatLayerRef.current = needleLayer
 
-			const encampmentBinned = filterAndBin(encampmentPoints, "all", 0)
+			const encampmentBinned = filterPoints(encampmentPoints, defaultYear, 0)
 			const encampmentLayer = createHeatLayer(encampmentBinned, ENCAMPMENT_GRADIENT)
 			encampmentLayer.addTo(map)
 			encampmentHeatLayerRef.current = encampmentLayer
@@ -198,22 +187,10 @@ export default function HeatMap({
 		}
 	}, [])
 
-	function filterMarker(m: MarkerData, year: string, month: number): boolean {
-		if (year !== "all") {
-			const mYear = new Date(m.dt).getFullYear()
-			if (mYear !== Number(year)) return false
-		}
-		if (month !== 0) {
-			const mMonth = new Date(m.dt).getMonth() + 1
-			if (mMonth !== month) return false
-		}
-		return true
-	}
-
 	function handleZoom(map: L.Map) {
 		const zoom = map.getZoom()
 		if (zoom >= 15) {
-			loadMarkers(map)
+			rebuildMarkers(map)
 		} else {
 			if (markerGroupRef.current) map.removeLayer(markerGroupRef.current)
 			if (encampmentMarkerGroupRef.current) map.removeLayer(encampmentMarkerGroupRef.current)
@@ -221,8 +198,24 @@ export default function HeatMap({
 		}
 	}
 
-	function rebuildMarkers(map: L.Map, year: string, month: number, layer: DataLayer) {
-		// Clear all existing markers
+	function filterMarker(m: MarkerData): boolean {
+		const yr = selYearRef.current
+		const mo = selMonthRef.current
+		if (yr !== "all") {
+			const markerYear = m.dt.slice(0, 4)
+			if (markerYear !== yr) return false
+		}
+		if (mo !== 0) {
+			const markerMonth = Number.parseInt(m.dt.slice(5, 7), 10)
+			if (markerMonth !== mo) return false
+		}
+		return true
+	}
+
+	function rebuildMarkers(map: L.Map) {
+		const layer = dataLayerRef.current
+
+		// Clear all marker groups
 		if (markerGroupRef.current) {
 			map.removeLayer(markerGroupRef.current)
 			markerGroupRef.current.clearLayers()
@@ -237,8 +230,7 @@ export default function HeatMap({
 		}
 
 		if ((layer === "needles" || layer === "both") && markerGroupRef.current) {
-			for (const m of needleMarkers) {
-				if (!filterMarker(m, year, month)) continue
+			for (const m of needleMarkers.filter(filterMarker)) {
 				L.circleMarker([m.lat, m.lng], {
 					radius: 5,
 					fillColor: "#e85a1b",
@@ -256,8 +248,7 @@ export default function HeatMap({
 		}
 
 		if ((layer === "encampments" || layer === "both") && encampmentMarkerGroupRef.current) {
-			for (const m of encampmentMarkers) {
-				if (!filterMarker(m, year, month)) continue
+			for (const m of encampmentMarkers.filter(filterMarker)) {
 				L.circleMarker([m.lat, m.lng], {
 					radius: 5,
 					fillColor: "#7b2d8e",
@@ -275,8 +266,7 @@ export default function HeatMap({
 		}
 
 		if (layer === "waste" && wasteMarkerGroupRef.current) {
-			for (const m of wasteMarkers) {
-				if (!filterMarker(m, year, month)) continue
+			for (const m of wasteMarkers.filter(filterMarker)) {
 				L.circleMarker([m.lat, m.lng], {
 					radius: 5,
 					fillColor: "#8B6914",
@@ -295,12 +285,13 @@ export default function HeatMap({
 	}
 
 	function loadMarkers(map: L.Map) {
-		rebuildMarkers(map, selYear, selMonth, dataLayer)
+		rebuildMarkers(map)
 	}
 
 	// Update layers when dataLayer changes
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency on dataLayer
 	useEffect(() => {
+		dataLayerRef.current = dataLayer
 		if (!ready || !mapInstance.current) return
 		const map = mapInstance.current
 
@@ -312,50 +303,54 @@ export default function HeatMap({
 		encampmentHeatLayerRef.current = null
 		wasteHeatLayerRef.current = null
 
-		// Reset filter to "all" when switching layers
-		setSelYear("all")
+		// Reset filter to default year when switching layers
+		selYearRef.current = defaultYear
+		selMonthRef.current = 0
+		setSelYear(defaultYear)
 		setSelMonth(0)
 
 		// Add appropriate layers
 		if (dataLayer === "needles" || dataLayer === "both") {
-			const pts = filterAndBin(needlePoints, "all", 0)
+			const pts = filterPoints(needlePoints, defaultYear, 0)
 			const layer = createHeatLayer(pts, NEEDLE_GRADIENT)
 			layer.addTo(map)
 			heatLayerRef.current = layer
-			setCount(needlePoints.length)
+			setCount(needlePoints.filter(([, , yr]) => String(yr) === defaultYear).length)
 		}
 
 		if (dataLayer === "encampments" || dataLayer === "both") {
-			const pts = filterAndBin(encampmentPoints, "all", 0)
+			const pts = filterPoints(encampmentPoints, defaultYear, 0)
 			const layer = createHeatLayer(pts, ENCAMPMENT_GRADIENT)
 			layer.addTo(map)
 			encampmentHeatLayerRef.current = layer
-			setEncampmentCount(encampmentPoints.length)
+			setEncampmentCount(encampmentPoints.filter(([, , yr]) => String(yr) === defaultYear).length)
 		}
 
 		if (dataLayer === "waste") {
-			const pts = filterAndBin(wastePoints, "all", 0)
+			const pts = filterPoints(wastePoints, defaultYear, 0)
 			const layer = createHeatLayer(pts, WASTE_GRADIENT)
 			layer.addTo(map)
 			wasteHeatLayerRef.current = layer
-			setWasteCount(wastePoints.length)
+			setWasteCount(wastePoints.filter(([, , yr]) => String(yr) === defaultYear).length)
 		}
 
 		// Re-show markers if zoomed in (with reset "all" filters since we just reset them)
 		if (map.getZoom() >= 15) {
-			rebuildMarkers(map, "all", 0, dataLayer)
+			rebuildMarkers(map)
 		}
 	}, [dataLayer, ready])
 
 	// Filter heatmap data client-side when filter changes
 	// biome-ignore lint/correctness/useExhaustiveDependencies: filtering depends on selYear/selMonth/dataLayer
 	useEffect(() => {
+		selYearRef.current = selYear
+		selMonthRef.current = selMonth
 		if (!ready || !mapInstance.current) return
 		const map = mapInstance.current
 
 		if (dataLayer === "needles" || dataLayer === "both") {
 			if (heatLayerRef.current) map.removeLayer(heatLayerRef.current)
-			const pts = filterAndBin(needlePoints, selYear, selMonth)
+			const pts = filterPoints(needlePoints, selYear, selMonth)
 			const layer = createHeatLayer(pts, NEEDLE_GRADIENT)
 			layer.addTo(map)
 			heatLayerRef.current = layer
@@ -369,7 +364,7 @@ export default function HeatMap({
 
 		if (dataLayer === "encampments" || dataLayer === "both") {
 			if (encampmentHeatLayerRef.current) map.removeLayer(encampmentHeatLayerRef.current)
-			const pts = filterAndBin(encampmentPoints, selYear, selMonth)
+			const pts = filterPoints(encampmentPoints, selYear, selMonth)
 			const layer = createHeatLayer(pts, ENCAMPMENT_GRADIENT)
 			layer.addTo(map)
 			encampmentHeatLayerRef.current = layer
@@ -383,7 +378,7 @@ export default function HeatMap({
 
 		if (dataLayer === "waste") {
 			if (wasteHeatLayerRef.current) map.removeLayer(wasteHeatLayerRef.current)
-			const pts = filterAndBin(wastePoints, selYear, selMonth)
+			const pts = filterPoints(wastePoints, selYear, selMonth)
 			const layer = createHeatLayer(pts, WASTE_GRADIENT)
 			layer.addTo(map)
 			wasteHeatLayerRef.current = layer
@@ -395,9 +390,9 @@ export default function HeatMap({
 			setWasteCount(filteredCount)
 		}
 
-		// Re-filter markers to match
+		// Rebuild markers with new filter
 		if (map.getZoom() >= 15) {
-			rebuildMarkers(map, selYear, selMonth, dataLayer)
+			rebuildMarkers(map)
 		}
 	}, [selYear, selMonth, ready, dataLayer])
 
@@ -749,18 +744,15 @@ function LayerRadio({
 }
 
 function createHeatLayer(pts: number[][], gradient: Record<number, string>): L.Layer {
-	const counts = pts.map((p) => p[2]).sort((a, b) => a - b)
-	const p95 = counts[Math.floor(counts.length * 0.95)] || 1
 	return (
 		L as Record<string, unknown> as {
 			heatLayer: (pts: number[][], opts: Record<string, unknown>) => L.Layer
 		}
 	).heatLayer(pts, {
-		radius: 38,
-		blur: 28,
+		radius: 25,
+		blur: 20,
 		maxZoom: 16,
-		max: p95,
-		minOpacity: 0.25,
+		minOpacity: 0.1,
 		gradient,
 	})
 }
