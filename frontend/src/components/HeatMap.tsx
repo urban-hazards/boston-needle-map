@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { MarkerData } from "../lib/types"
 
 declare const L: typeof import("leaflet")
@@ -116,6 +116,35 @@ export default function HeatMap({
 
 	const activeYears =
 		dataLayer === "encampments" ? encampmentYears : dataLayer === "waste" ? wasteYears : years
+
+	// Compute which years/months actually have data for the active layer
+	const activePoints = useMemo(() => {
+		if (dataLayer === "encampments") return encampmentPoints
+		if (dataLayer === "waste") return wastePoints
+		if (dataLayer === "both") return [...needlePoints, ...encampmentPoints]
+		return needlePoints
+	}, [dataLayer, needlePoints, encampmentPoints, wastePoints])
+
+	const availableYears = useMemo(() => {
+		const s = new Set<number>()
+		for (const [, , yr] of activePoints) s.add(yr)
+		return s
+	}, [activePoints])
+
+	const availableMonths = useMemo(() => {
+		const s = new Set<number>()
+		for (const [, , yr, mo] of activePoints) {
+			if (selYear === "all" || yr === Number(selYear)) s.add(mo)
+		}
+		return s
+	}, [activePoints, selYear])
+
+	// Reset month if current selection has no data
+	useEffect(() => {
+		if (selMonth !== 0 && !availableMonths.has(selMonth)) {
+			setSelMonth(0)
+		}
+	}, [availableMonths, selMonth])
 
 	useEffect(() => {
 		const check = () => setIsMobile(window.innerWidth < 640)
@@ -536,9 +565,15 @@ export default function HeatMap({
 								style={selectStyle}
 							>
 								<option value="all">All Years</option>
-								{activeYears.map((yr) => (
-									<option key={yr} value={String(yr)}>
+								{[...activeYears].reverse().map((yr) => (
+									<option
+										key={yr}
+										value={String(yr)}
+										disabled={!availableYears.has(yr)}
+										style={!availableYears.has(yr) ? { color: "#bbb" } : undefined}
+									>
 										{yr}
+										{!availableYears.has(yr) ? " (no data)" : ""}
 									</option>
 								))}
 							</select>
@@ -552,8 +587,14 @@ export default function HeatMap({
 							>
 								<option value={0}>All Months</option>
 								{MONTHS.map((name, i) => (
-									<option key={name} value={i + 1}>
+									<option
+										key={name}
+										value={i + 1}
+										disabled={!availableMonths.has(i + 1)}
+										style={!availableMonths.has(i + 1) ? { color: "#bbb" } : undefined}
+									>
 										{name}
+										{!availableMonths.has(i + 1) ? " (no data)" : ""}
 									</option>
 								))}
 							</select>
