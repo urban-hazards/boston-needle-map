@@ -24,7 +24,7 @@ const description =
 		<h1 class="page-title">How the City Can Fix This</h1>
 		<p class="page-subtitle">
 			Boston's 311 system has no category for human waste. Reports get filed under
-			street cleaning, closed as "not our job," and the waste stays on the sidewalk.
+			street cleaning, closed as out-of-scope, and the waste stays on the sidewalk.
 			Here are three ways to fix it — from a no-politics software patch to a
 			full-service model other cities have already built.
 		</p>
@@ -42,8 +42,9 @@ const description =
 						out of 162+ internal ticket types. None of them are "human waste" or "biohazard."</li>
 					<li>Most people select <strong>"Requests for Street Cleaning"</strong> — the closest option.
 						This routes the ticket to Boston Public Works (BPW) street sweeping crews.</li>
-					<li>BPW closes the ticket with <em>"bpw does not service human waste"</em> because
-						<strong>street sweeping crews are not equipped for biohazard cleanup</strong>.</li>
+					<li>BPW can't handle the biohazard — and <strong>the system gives workers no way to
+						reroute the ticket</strong> to a team that can. Their only option is to close it
+						with <em>"bpw does not service human waste."</em></li>
 					<li>The ticket is marked <strong>"closed"</strong> in city data. It looks resolved. It isn't.</li>
 				</ol>
 				<p>
@@ -53,6 +54,32 @@ const description =
 					a category for them. Read the <a href="/methodology">full methodology</a> for how
 					we detect them.
 				</p>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Reroute gap">
+			<h2 class="section-title">The Missing Reroute Button</h2>
+			<div class="card prose">
+				<p>
+					Even if the city adds a human waste category tomorrow, there's a second
+					bug that affects every misrouted ticket in the system: <strong>workers who
+					receive a ticket outside their scope have no way to forward it to the
+					right team.</strong> Their only option is to close it.
+				</p>
+				<p>
+					This is a distinct problem from the missing category. A street sweeping
+					crew that gets a biohazard ticket should be able to reroute it to the
+					biohazard queue with one click — the way email forwarding works. Instead,
+					the ticket dies in their queue, the resident gets a "closed" notification,
+					and the waste stays on the sidewalk.
+				</p>
+				<div class="fix-box">
+					<strong>What should change:</strong> Add a "reroute to department" action
+					in the Creatio CRM so workers can forward misrouted tickets instead of
+					closing them. This keeps the ticket alive until it reaches a team that
+					can act on it. The new Creatio platform supports workflow routing — this
+					is a configuration change.
+				</div>
 			</div>
 		</section>
 
@@ -850,6 +877,17 @@ const description =
 		background: var(--color-blue-light);
 		border-color: var(--color-blue);
 		text-decoration: none;
+	}
+
+	.fix-box {
+		background: #d4edda;
+		border: 1px solid #28a745;
+		border-radius: var(--radius-sm);
+		padding: 12px 16px;
+		margin: 14px 0;
+		font-size: var(--fs-sm);
+		line-height: 1.6;
+		color: #155724;
 	}
 
 	@media (max-width: 768px) {
