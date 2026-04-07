@@ -1,0 +1,918 @@
+---
+import Footer from "../components/Footer.astro"
+import Header from "../components/Header.astro"
+import BaseLayout from "../layouts/BaseLayout.astro"
+import { fetchPageStats } from "../lib/bucket"
+import "../styles/global.css"
+
+const stats = await fetchPageStats("needles")
+const wasteStats = await fetchPageStats("waste")
+
+const title = "How to Fix Boston's 311 System for Human Waste — Boston Urban Hazard Maps"
+const description =
+	"Three concrete proposals for fixing how Boston handles human waste reports through 311. Based on what San Francisco, Portland, and Albuquerque have already done."
+---
+
+<BaseLayout title={title} description={description} canonical="https://www.urbanhazardmaps.com/fix">
+	<Header generated={stats.generated} />
+
+	<main class="container" style="padding-top: 32px; padding-bottom: 48px;">
+		<nav class="breadcrumb" aria-label="Breadcrumb">
+			<a href="/">Home</a> <span aria-hidden="true">/</span> <span>How to Fix This</span>
+		</nav>
+
+		<h1 class="page-title">How the City Can Fix This</h1>
+		<p class="page-subtitle">
+			Boston's 311 system has no category for human waste. Reports get filed under
+			street cleaning, closed as out-of-scope, and the waste stays on the sidewalk.
+			Here are three ways to fix it — from a no-politics software patch to a
+			full-service model other cities have already built.
+		</p>
+
+		<section class="section" aria-label="Current state">
+			<h2 class="section-title">The Current System Is Broken</h2>
+			<div class="card prose">
+				<p>
+					Right now, when a Boston resident reports human waste through 311:
+				</p>
+				<ol>
+					<li>The <strong>BOS:311 app offers no matching category</strong>. Only
+						<a href="https://boston2-production.spotmobile.net/open311/v2/services.json"
+							target="_blank" rel="noopener">16 service types</a> are exposed to the app
+						out of 162+ internal ticket types. None of them are "human waste" or "biohazard."</li>
+					<li>Most people select <strong>"Requests for Street Cleaning"</strong> — the closest option.
+						This routes the ticket to Boston Public Works (BPW) street sweeping crews.</li>
+					<li>BPW can't handle the biohazard — and <strong>the system gives workers no way to
+						reroute the ticket</strong> to a team that can. Their only option is to close it
+						with <em>"bpw does not service human waste."</em></li>
+					<li>The ticket is marked <strong>"closed"</strong> in city data. It looks resolved. It isn't.</li>
+				</ol>
+				<p>
+					Our <a href="/methodology">NLP classifier</a> has identified
+					<strong>{wasteStats.total.toLocaleString()} human waste reports</strong> buried in
+					street cleaning tickets. The city has no count of these because the data doesn't have
+					a category for them. Read the <a href="/methodology">full methodology</a> for how
+					we detect them.
+				</p>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Reroute gap">
+			<h2 class="section-title">The Missing Reroute Button</h2>
+			<div class="card prose">
+				<p>
+					Even if the city adds a human waste category tomorrow, there's a second
+					bug that affects every misrouted ticket in the system: <strong>workers who
+					receive a ticket outside their scope have no way to forward it to the
+					right team.</strong> Their only option is to close it.
+				</p>
+				<p>
+					This is a distinct problem from the missing category. A street sweeping
+					crew that gets a biohazard ticket should be able to reroute it to the
+					biohazard queue with one click — the way email forwarding works. Instead,
+					the ticket dies in their queue, the resident gets a "closed" notification,
+					and the waste stays on the sidewalk.
+				</p>
+				<div class="fix-box">
+					<strong>What should change:</strong> Add a "reroute to department" action
+					in the Creatio CRM so workers can forward misrouted tickets instead of
+					closing them. This keeps the ticket alive until it reaches a team that
+					can act on it. The new Creatio platform supports workflow routing — this
+					is a configuration change.
+				</div>
+			</div>
+		</section>
+
+		<section class="section" aria-label="What other cities do">
+			<h2 class="section-title">What Other Cities Have Already Done</h2>
+			<p style="font-size: var(--fs-base); color: var(--color-text-muted); margin-bottom: 16px; max-width: 800px;">
+				Boston is not the first city to face this. Three cities have built dedicated systems
+				for human waste reporting — and their solutions range from simple category additions
+				to full-service cleanup programs.
+			</p>
+
+			<div class="city-grid">
+				<div class="city-card">
+					<div class="city-header">
+						<span class="city-name">San Francisco</span>
+						<span class="city-status status-active">Active since 2008</span>
+					</div>
+					<div class="city-category">"Human or Animal Waste"</div>
+					<div class="city-details">
+						<div class="city-detail-row">
+							<span class="city-detail-label">Department</span>
+							<span>Dept. of Sanitation &amp; Streets</span>
+						</div>
+						<div class="city-detail-row">
+							<span class="city-detail-label">Response SLA</span>
+							<span>12–24 hours</span>
+						</div>
+						<div class="city-detail-row">
+							<span class="city-detail-label">Volume</span>
+							<span>~65 reports/day; 4,000+/month peak</span>
+						</div>
+					</div>
+					<p class="city-note">
+						SF's dedicated category enabled a
+						<a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0327795"
+							target="_blank" rel="noopener">peer-reviewed study in PLOS ONE</a> ("Privy by the Bay")
+						analyzing waste report patterns from 2009–2022. In 2018, the city created a
+						<strong>"Poop Patrol"</strong> — a 6-person crew with steam-cleaning equipment
+						that proactively patrols hotspots. This research and response was only possible
+						because the data was categorized correctly from the start.
+					</p>
+					<div class="city-source">
+						Source: <a href="https://www.sf.gov/request-street-or-sidewalk-cleaning"
+							target="_blank" rel="noopener">sf.gov</a>,
+						<a href="https://data.sfgov.org/City-Infrastructure/311-Cases/vw6y-z8j6"
+							target="_blank" rel="noopener">DataSF open data</a>
+					</div>
+				</div>
+
+				<div class="city-card">
+					<div class="city-header">
+						<span class="city-name">Portland, OR</span>
+						<span class="city-status status-active">Active</span>
+					</div>
+					<div class="city-category">"Biohazard"</div>
+					<div class="city-details">
+						<div class="city-detail-row">
+							<span class="city-detail-label">Department</span>
+							<span>Public Environment Mgmt Office (PEMO)</span>
+						</div>
+						<div class="city-detail-row">
+							<span class="city-detail-label">Response SLA</span>
+							<span>Same-day (8am–10pm)</span>
+						</div>
+						<div class="city-detail-row">
+							<span class="city-detail-label">Reporting</span>
+							<span>PDX Reporter app, 311, email dispatch</span>
+						</div>
+					</div>
+					<p class="city-note">
+						Portland consolidated biohazard, needles, encampments, graffiti, and dumped
+						garbage under a single office (PEMO) that handles all public environment issues.
+						Biohazard is an explicit, separate category — not lumped with general trash.
+						<strong>Boston's SHARPS team already handles needles</strong>; extending to human
+						waste is a natural expansion of this model.
+					</p>
+					<div class="city-source">
+						Source: <a href="https://www.portland.gov/pemo/resources"
+							target="_blank" rel="noopener">portland.gov/pemo</a>,
+						<a href="https://www.portland.gov/311"
+							target="_blank" rel="noopener">PDX 311</a>
+					</div>
+				</div>
+
+				<div class="city-card city-card-highlight">
+					<div class="city-header">
+						<span class="city-name">Albuquerque</span>
+						<span class="city-status status-new">New — launched 2024</span>
+					</div>
+					<div class="city-category">Human feces cleanup via 311</div>
+					<div class="city-details">
+						<div class="city-detail-row">
+							<span class="city-detail-label">Department</span>
+							<span>Environmental Health Dept.</span>
+						</div>
+						<div class="city-detail-row">
+							<span class="city-detail-label">Response SLA</span>
+							<span>24–48 hours</span>
+						</div>
+						<div class="city-detail-row">
+							<span class="city-detail-label">Cost</span>
+							<span>~$62.50 per callout</span>
+						</div>
+					</div>
+					<p class="city-note">
+						<strong>This is the closest precedent to what Boston needs.</strong>
+						City Council passed it unanimously in February 2024.
+						From proposal to operational in ~3 months. The city hired a biohazard
+						contractor (Specialized General Services) with PPE and specialized equipment.
+						Before the program: 399 calls/year. After launch: <strong>1,600+ calls in
+						the first quarter alone</strong> — proving the demand was always there,
+						just invisible.
+					</p>
+					<p class="city-note" style="margin-top: 8px;">
+						Initial $100K budget was depleted within months, leading to a
+						second Council allocation of $300K. Projected ongoing cost: ~$700K/year.
+					</p>
+					<div class="city-source">
+						Source: <a href="https://citydesk.org/2024/09/04/calls-for-poop-patrol-increase-as-city-tackles-human-waste-disposal/"
+							target="_blank" rel="noopener">City Desk ABQ</a>,
+						<a href="https://www.cabq.gov/council/find-your-councilor/district-7/news/council-passes-resolution-for-fecal-matter-clean-up"
+							target="_blank" rel="noopener">CABQ.gov Council resolution</a>,
+						<a href="https://www.abqjournal.com/news/nowhere-to-go-albuquerques-human-waste-cleanup-underscores-housing-crisis/396888"
+							target="_blank" rel="noopener">ABQ Journal</a>
+					</div>
+				</div>
+			</div>
+
+			<div class="card prose" style="margin-top: 16px;">
+				<p>
+					For comparison: <strong>New York, Seattle, Los Angeles, Denver, Houston, and
+					Chicago</strong> all lack a dedicated human waste category. In each city, waste
+					reports get buried under "dirty sidewalk," "illegal dumping," or general sanitation
+					tickets — the same problem Boston has. These cities cannot measure the scope of
+					the issue because their data doesn't distinguish it.
+				</p>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Three solutions">
+			<h2 class="section-title">Three Ways to Fix It</h2>
+			<p style="font-size: var(--fs-base); color: var(--color-text-muted); margin-bottom: 20px; max-width: 800px;">
+				These options are not mutually exclusive. Option 1 can ship this month with no
+				political action. Options 2 and 3 require city buy-in but align with the
+				ongoing Creatio CRM migration.
+			</p>
+
+			<div id="solution-1" class="solution-card solution-quick">
+				<div class="solution-header">
+					<div>
+						<span class="solution-tier tier-quick">Option 1</span>
+						<h3 class="solution-title">NLP Classifier on Closed Tickets</h3>
+					</div>
+					<div class="solution-meta">
+						<span class="solution-effort">No political action needed</span>
+						<span class="solution-timeline">Weeks to deploy</span>
+					</div>
+				</div>
+				<div class="solution-body">
+					<p>
+						Run a text classifier on every 311 ticket when it closes. If the closure notes
+						or description match human waste patterns, <strong>automatically open a new
+						ticket</strong> routed to the biohazard vendor. No new button in the app, no
+						retraining call center staff, no council vote.
+					</p>
+					<div class="solution-how">
+						<h4>How it works</h4>
+						<ol>
+							<li>Ticket closes in the CRM (Creatio or legacy Lagan)</li>
+							<li>Post-close webhook triggers NLP classifier on the ticket text</li>
+							<li>If classified as human waste (high confidence), a new ticket is
+								auto-created with the original location, routed to the biohazard
+								contractor queue</li>
+							<li>Original ticket stays closed for street cleaning metrics; new ticket
+								tracks biohazard response separately</li>
+						</ol>
+					</div>
+					<div class="solution-how">
+						<h4>Why this works</h4>
+						<ul>
+							<li>Sidesteps the "new button" political process entirely</li>
+							<li>Works on the existing ticket flow — no resident behavior change needed</li>
+							<li>Catches waste reports filed under <em>any</em> category, not just street cleaning</li>
+							<li>Our <a href="/methodology">open source classifier</a> already exists and is
+								validated (98% recall, 0 false positives on 32K records)</li>
+							<li>The new Creatio platform supports
+								<a href="https://keen360.com/keen311/" target="_blank" rel="noopener">no-code
+								workflow automation</a> — this is exactly the kind of rule it was designed for</li>
+						</ul>
+					</div>
+					<div class="solution-how">
+						<h4>What the city needs to do</h4>
+						<ul>
+							<li>Designate a biohazard contractor (or expand the existing SHARPS vendor contract)</li>
+							<li>Create a "Biohazard Cleanup" queue in Creatio</li>
+							<li>Deploy the classifier as a post-close automation rule</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+
+			<div class="solution-card solution-medium">
+				<div class="solution-header">
+					<div>
+						<span class="solution-tier tier-medium">Option 2</span>
+						<h3 class="solution-title">Add a 311 Category During the CRM Migration</h3>
+					</div>
+					<div class="solution-meta">
+						<span class="solution-effort">Requires DoIT coordination</span>
+						<span class="solution-timeline">Months (aligns with Creatio rollout)</span>
+					</div>
+				</div>
+				<div class="solution-body">
+					<p>
+						Add "Human Waste / Biohazard" as a visible category in the BOS:311 app,
+						the 311 phone scripts, and the Creatio web portal. Route it to the
+						appropriate department with a defined SLA.
+					</p>
+					<div class="solution-how">
+						<h4>Why now is the right time</h4>
+						<p>
+							Boston is in the middle of migrating from its legacy Lagan CRM to
+							<a href="https://www.creatio.com/page/customer-success/city-of-boston"
+								target="_blank" rel="noopener">Creatio</a>, a cloud-based platform.
+							As of April 2026, roughly half of 311 operations have transitioned.
+							Categories are actively being
+							<strong>"renamed, consolidated, split, or retired"</strong> during
+							this migration. The
+							<a href="https://keen360.com/keen311/" target="_blank" rel="noopener">Keen311
+							platform</a> explicitly supports no-code creation of new case types.
+						</p>
+						<p>
+							Adding a category during an active migration is far easier than
+							retrofitting one into a stable system. The technical barrier is
+							essentially zero — this is a configuration change, not a software
+							development project.
+						</p>
+					</div>
+					<div class="solution-how">
+						<h4>The Albuquerque playbook</h4>
+						<p>
+							Albuquerque's City Council passed this unanimously in February 2024.
+							The resolution directed the administration to: (1) engage a biohazard
+							contractor, (2) coordinate with 311 to create a reporting mechanism,
+							(3) track locations and volume. From proposal to operational in ~3 months.
+						</p>
+						<p>
+							Boston's <a href="https://www.boston.gov/departments/city-council/city-services-and-innovation-technology"
+								target="_blank" rel="noopener">Committee on City Services and Innovation Technology</a>,
+							chaired by Councilor Edward Flynn, has jurisdiction over exactly this.
+						</p>
+					</div>
+					<div class="solution-how">
+						<h4>The ownership question</h4>
+						<p>
+							The real blocker isn't technology — it's <strong>which department owns
+							the response</strong>. BPW explicitly rejects human waste. Options:
+						</p>
+						<ul>
+							<li><strong>Expand the SHARPS vendor contract</strong> — Boston already
+								has a Mobile Sharps Team for needle pickup. Adding biohazard cleanup
+								to the same contract is a natural extension.</li>
+							<li><strong>Inspectional Services (ISD)</strong> — handles code enforcement
+								and health inspections. Could own the queue and dispatch contractors.</li>
+							<li><strong>Boston Public Health Commission (BPHC)</strong> — handles
+								public health emergencies. Logical owner but may lack field operations.</li>
+							<li><strong>Outside contractor</strong> — Albuquerque's model. City contracts
+								with a biohazard specialist at ~$62.50/callout ($700K/year projected).</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+
+			<div class="solution-card solution-long">
+				<div class="solution-header">
+					<div>
+						<span class="solution-tier tier-long">Option 3</span>
+						<h3 class="solution-title">Public Environment Office (Portland Model)</h3>
+					</div>
+					<div class="solution-meta">
+						<span class="solution-effort">Requires political will + budget</span>
+						<span class="solution-timeline">6–12 months</span>
+					</div>
+				</div>
+				<div class="solution-body">
+					<p>
+						Create a single office — like Portland's
+						<a href="https://www.portland.gov/pemo/resources" target="_blank" rel="noopener">Public
+						Environment Management Office (PEMO)</a> — that handles all public
+						right-of-way environmental hazards: biohazard waste, needles, encampment
+						cleanup, illegal dumping.
+					</p>
+					<div class="solution-how">
+						<h4>What Portland's PEMO handles</h4>
+						<ul>
+							<li>Biohazard (human waste, medical waste, drug paraphernalia)</li>
+							<li>Encampment cleanup and outreach coordination</li>
+							<li>Graffiti removal</li>
+							<li>Illegal dumping</li>
+							<li>Dedicated dispatch email with same-day response</li>
+						</ul>
+						<p>
+							Boston already has pieces of this scattered across departments — SHARPS
+							team for needles, BPW for street cleaning, ISD for code enforcement.
+							A PEMO-style consolidation would eliminate the routing failures by
+							putting everything under one roof with one dispatch workflow.
+						</p>
+					</div>
+					<div class="solution-how">
+						<h4>San Francisco's evolution</h4>
+						<p>
+							SF started with just a 311 category (2008), then added the "Poop Patrol"
+							proactive team (2018), then installed
+							<a href="https://www.sf.gov/information/pit-stop-program" target="_blank"
+								rel="noopener">Pit Stop public restrooms</a> at hotspot locations
+							identified by 311 data. Each step was informed by the data from the
+							previous step. <strong>The 311 category was the foundation that made
+							everything else possible.</strong>
+						</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Closed ticket analysis">
+			<h2 class="section-title">Beyond Human Waste: What Else Is Falling Through the Cracks?</h2>
+			<div class="card prose">
+				<p>
+					The NLP-on-close approach (Option 1) isn't limited to human waste. If you
+					run text classification across <em>all</em> closed 311 tickets, you can
+					detect systemic patterns:
+				</p>
+				<ul>
+					<li>Tickets closed with "not our department" language — misrouted requests
+						that were never re-routed</li>
+					<li>Tickets closed within minutes of opening — likely auto-closed or
+						rejected without review</li>
+					<li>Tickets with closure notes that contradict the reported issue — e.g.,
+						"area cleaned" on a report about a structural hazard</li>
+					<li>Categories with abnormally high closure rates and low resolution rates</li>
+				</ul>
+				<p>
+					This kind of analysis is on our roadmap. The same open data that let us
+					find buried human waste reports can reveal other categories where the 311
+					system is accepting reports it cannot or does not resolve.
+				</p>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Who to contact">
+			<h2 class="section-title">Who Needs to Act</h2>
+			<div class="contact-grid">
+				<div class="contact-card">
+					<div class="contact-role">Technology</div>
+					<div class="contact-name">Boston Digital Service</div>
+					<p>Owns the 311 CRM platform and Creatio migration.
+						Can configure new case types and automation rules.</p>
+					<div class="contact-info">
+						<a href="mailto:digital@boston.gov">digital@boston.gov</a> · 617-635-4500
+					</div>
+					<div class="contact-source">
+						<a href="https://www.boston.gov/departments/boston-digital-service/311-technology-modernization-project"
+							target="_blank" rel="noopener">311 Modernization Project</a>
+					</div>
+				</div>
+				<div class="contact-card">
+					<div class="contact-role">City Council Oversight</div>
+					<div class="contact-name">Committee on City Services &amp; Innovation Technology</div>
+					<p>Chaired by Councilor Edward Flynn (D2).
+						Has jurisdiction over 311, Public Works, and Inspectional Services.</p>
+					<div class="contact-info">
+						<a href="mailto:ccc.csit@boston.gov">ccc.csit@boston.gov</a>
+					</div>
+					<div class="contact-source">
+						<a href="https://www.boston.gov/departments/city-council/city-services-and-innovation-technology"
+							target="_blank" rel="noopener">Committee page</a>
+					</div>
+				</div>
+				<div class="contact-card">
+					<div class="contact-role">CIO</div>
+					<div class="contact-name">Santiago Garces</div>
+					<p>Chief Information Officer. Leading the 311 modernization.
+						Previously CIO of Pittsburgh and innovation officer of South Bend.</p>
+					<div class="contact-source">
+						<a href="https://www.boston.gov/government/cabinets/innovation-and-technology"
+							target="_blank" rel="noopener">Innovation &amp; Technology Cabinet</a>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Data gaps">
+			<h2 class="section-title">What This Data Doesn't Show</h2>
+			<div class="card prose">
+				<p>
+					The 311 data we map is only part of the picture. At least two major cleanup
+					operations in Boston track their own data separately — meaning the true scale
+					of the problem is larger than what appears on our map.
+				</p>
+				<ul>
+					<li><strong>Newmarket Business Improvement District</strong> — operates its own
+						needle pickup team in the Newmarket area, one of the highest-density zones
+						for sharps activity. They track this data and share it with the city, but it
+						does not appear in the 311 open data feed.</li>
+					<li><strong>Boston Public Health Commission</strong> — has a citywide needle
+						pickup team that handles a significant volume of sharps removals. This data
+						is also absent from the 311 feed.</li>
+				</ul>
+				<p>
+					This means neighborhoods served by these teams — particularly Newmarket, South End,
+					and surrounding areas — appear lower-risk on our map than they actually are. A
+					unified reporting system (see <a href="#solution-1">Solution 1</a> above) would
+					capture all cleanup activity in one place, giving the city and public an accurate
+					picture of the problem.
+				</p>
+			</div>
+		</section>
+
+		<section class="section" aria-label="Our data">
+			<h2 class="section-title">The Data Behind This Proposal</h2>
+			<div class="card prose">
+				<p>
+					This proposal is backed by our analysis of Boston's open 311 data:
+				</p>
+				<ul>
+					<li><strong>{wasteStats.total.toLocaleString()} human waste reports</strong> identified
+						via NLP classification of street cleaning tickets
+						(<a href="/methodology">methodology</a>)</li>
+					<li><strong>{stats.total.toLocaleString()} sharps reports</strong> and
+						<strong>{stats.hoods.length} neighborhoods</strong> mapped on the
+						<a href="/">main dashboard</a></li>
+					<li>All source code is <a href="https://github.com/urban-hazards/urban-hazard-maps"
+						target="_blank" rel="noopener">open source</a> under MIT license</li>
+					<li>Raw data sourced from <a href="https://data.boston.gov/dataset/311-service-requests"
+						target="_blank" rel="noopener">Boston's open data portal</a> via CKAN API</li>
+				</ul>
+				<p>
+					If you're a journalist, researcher, city official, or community organizer
+					who wants to use this data, everything is freely available. We built this
+					to make a hidden public health problem visible — and to show that solutions
+					already exist in other cities.
+				</p>
+			</div>
+		</section>
+
+		<div style="display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap;">
+			<a href="/methodology" class="nav-link">How the classifier works &rarr;</a>
+			<a href="/" class="nav-link">Back to the map &rarr;</a>
+		</div>
+	</main>
+
+	<Footer />
+</BaseLayout>
+
+<style>
+	.breadcrumb {
+		font-size: var(--fs-sm);
+		color: var(--color-text-muted);
+		margin-bottom: var(--sp-md);
+	}
+
+	.breadcrumb a {
+		color: var(--color-blue);
+	}
+
+	.breadcrumb span {
+		margin: 0 4px;
+	}
+
+	.page-title {
+		font-size: var(--fs-2xl);
+		margin-bottom: 8px;
+		position: relative;
+		padding-bottom: 16px;
+	}
+
+	.page-title::after {
+		content: "";
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 60px;
+		height: 3px;
+		background: var(--color-accent);
+		border-radius: 2px;
+	}
+
+	.page-subtitle {
+		font-size: var(--fs-md);
+		line-height: 1.7;
+		color: var(--color-text-muted);
+		margin-bottom: var(--sp-xl);
+		max-width: 900px;
+	}
+
+	.prose {
+		line-height: 1.8;
+		font-size: var(--fs-base);
+		color: var(--color-text-muted);
+		border-left: 3px solid var(--color-teal);
+	}
+
+	.prose p {
+		margin-bottom: 14px;
+	}
+
+	.prose p:last-child {
+		margin-bottom: 0;
+	}
+
+	.prose ol,
+	.prose ul {
+		margin: 12px 0;
+		padding-left: 24px;
+	}
+
+	.prose li {
+		margin-bottom: 8px;
+	}
+
+	.prose em {
+		background: var(--color-accent-light);
+		padding: 1px 4px;
+		border-radius: 3px;
+		font-style: normal;
+		font-size: var(--fs-sm);
+		font-family: monospace;
+	}
+
+	/* City comparison cards */
+	.city-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 16px;
+	}
+
+	.city-card {
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		padding: 18px;
+		box-shadow: var(--shadow-sm);
+	}
+
+	.city-card-highlight {
+		grid-column: 1 / -1;
+		border-color: var(--color-accent);
+		border-width: 2px;
+		background: #fffaf7;
+	}
+
+	.city-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 6px;
+	}
+
+	.city-name {
+		font-size: var(--fs-lg);
+		font-weight: 700;
+		color: var(--color-text);
+	}
+
+	.city-status {
+		font-size: var(--fs-xs);
+		font-weight: 600;
+		padding: 2px 8px;
+		border-radius: 3px;
+	}
+
+	.status-active {
+		background: #d4edda;
+		color: #155724;
+	}
+
+	.status-new {
+		background: #fef3cd;
+		color: #856404;
+	}
+
+	.city-category {
+		font-size: var(--fs-base);
+		font-weight: 600;
+		color: var(--color-accent);
+		margin-bottom: 10px;
+	}
+
+	.city-details {
+		background: var(--color-surface-alt);
+		border: 1px solid var(--color-border-light);
+		border-radius: var(--radius-sm);
+		padding: 10px 12px;
+		margin-bottom: 12px;
+	}
+
+	.city-detail-row {
+		display: flex;
+		justify-content: space-between;
+		padding: 3px 0;
+		font-size: var(--fs-sm);
+		color: var(--color-text-muted);
+	}
+
+	.city-detail-label {
+		font-weight: 600;
+		color: var(--color-text);
+	}
+
+	.city-note {
+		font-size: var(--fs-sm);
+		line-height: 1.6;
+		color: var(--color-text-muted);
+	}
+
+	.city-source {
+		font-size: var(--fs-xs);
+		color: var(--color-text-light);
+		margin-top: 10px;
+		padding-top: 8px;
+		border-top: 1px solid var(--color-border-light);
+	}
+
+	/* Solution cards */
+	.solution-card {
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		margin-bottom: 20px;
+		box-shadow: var(--shadow-sm);
+		overflow: hidden;
+	}
+
+	.solution-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		padding: 18px 20px;
+		border-bottom: 1px solid var(--color-border-light);
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.solution-title {
+		font-size: var(--fs-lg);
+		margin: 4px 0 0;
+	}
+
+	.solution-tier {
+		display: inline-block;
+		font-size: var(--fs-xs);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		padding: 2px 8px;
+		border-radius: 3px;
+	}
+
+	.tier-quick {
+		background: #d4edda;
+		color: #155724;
+	}
+
+	.tier-medium {
+		background: #fef3cd;
+		color: #856404;
+	}
+
+	.tier-long {
+		background: #e8daef;
+		color: #6c3483;
+	}
+
+	.solution-meta {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 4px;
+		font-size: var(--fs-xs);
+		color: var(--color-text-light);
+	}
+
+	.solution-effort {
+		font-weight: 600;
+	}
+
+	.solution-body {
+		padding: 18px 20px;
+		font-size: var(--fs-base);
+		line-height: 1.7;
+		color: var(--color-text-muted);
+	}
+
+	.solution-body p {
+		margin-bottom: 14px;
+	}
+
+	.solution-how {
+		background: var(--color-surface-alt);
+		border: 1px solid var(--color-border-light);
+		border-radius: var(--radius-sm);
+		padding: 14px 16px;
+		margin: 14px 0;
+	}
+
+	.solution-how h4 {
+		font-size: var(--fs-sm);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: var(--color-text);
+		margin-bottom: 8px;
+	}
+
+	.solution-how p {
+		font-size: var(--fs-sm);
+		margin-bottom: 10px;
+	}
+
+	.solution-how p:last-child {
+		margin-bottom: 0;
+	}
+
+	.solution-how ol,
+	.solution-how ul {
+		padding-left: 20px;
+		font-size: var(--fs-sm);
+	}
+
+	.solution-how li {
+		margin-bottom: 6px;
+	}
+
+	/* Contact cards */
+	.contact-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 16px;
+	}
+
+	.contact-card {
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		padding: 18px;
+		box-shadow: var(--shadow-sm);
+		font-size: var(--fs-sm);
+		color: var(--color-text-muted);
+		line-height: 1.6;
+	}
+
+	.contact-role {
+		font-size: var(--fs-xs);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--color-text-light);
+		margin-bottom: 4px;
+	}
+
+	.contact-name {
+		font-size: var(--fs-base);
+		font-weight: 700;
+		color: var(--color-text);
+		margin-bottom: 8px;
+	}
+
+	.contact-info {
+		font-size: var(--fs-sm);
+		margin-top: 10px;
+		padding-top: 8px;
+		border-top: 1px solid var(--color-border-light);
+	}
+
+	.contact-source {
+		font-size: var(--fs-xs);
+		color: var(--color-text-light);
+		margin-top: 6px;
+	}
+
+	/* Nav links */
+	.nav-link {
+		display: inline-block;
+		font-size: var(--fs-base);
+		color: var(--color-blue);
+		padding: 8px 20px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		transition:
+			background var(--transition),
+			border-color var(--transition);
+	}
+
+	.nav-link:hover {
+		background: var(--color-blue-light);
+		border-color: var(--color-blue);
+		text-decoration: none;
+	}
+
+	.fix-box {
+		background: #d4edda;
+		border: 1px solid #28a745;
+		border-radius: var(--radius-sm);
+		padding: 12px 16px;
+		margin: 14px 0;
+		font-size: var(--fs-sm);
+		line-height: 1.6;
+		color: #155724;
+	}
+
+	@media (max-width: 768px) {
+		.city-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.city-card-highlight {
+			grid-column: auto;
+		}
+
+		.contact-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.solution-header {
+			flex-direction: column;
+		}
+
+		.solution-meta {
+			align-items: flex-start;
+		}
+
+		.page-title {
+			font-size: 22px;
+		}
+	}
+</style>
