@@ -49,8 +49,9 @@ const description =
 						human waste safely.
 					</li>
 					<li>
-						<strong>Closed without action</strong> — city workers often close the ticket with
-						notes like <em>"bpw does not service human waste"</em> (BPW = Boston Public Works,
+						<strong>Closed without resolution</strong> — the receiving department has no
+						option to reroute the ticket, so it gets closed with notes like
+						<em>"bpw does not service human waste"</em> (BPW = Boston Public Works,
 						the department that handles street cleaning). The ticket is marked resolved in the
 						system, but nothing was actually cleaned up.
 					</li>
@@ -84,7 +85,7 @@ const description =
 				<div class="routing-arrow">→</div>
 				<div class="routing-stat-card routing-bad">
 					<div class="routing-stat-value" data-placeholder>TBD%</div>
-					<div class="routing-stat-label">closed by street sweeping as "not our job"</div>
+					<div class="routing-stat-label">closed — street sweeping has no reroute option for biohazards</div>
 				</div>
 				<div class="routing-arrow">→</div>
 				<div class="routing-stat-card routing-worse">
@@ -96,10 +97,10 @@ const description =
 				<p>
 					Most residents who report human waste through 311 are submitting a ticket
 					into a system that has no path to resolve it. Whether it lands in street
-					cleaning or another category, there's no biohazard routing. A city worker
-					reads it, closes it because their department doesn't handle human waste,
-					and the ticket disappears into the "resolved" column — even though nothing
-					was cleaned up.
+					cleaning or another category, there's no biohazard routing. The ticket
+					reaches a department that doesn't handle human waste — and the system
+					offers no way to forward it. It gets closed and disappears into the
+					"resolved" column — even though nothing was cleaned up.
 				</p>
 				<p>
 					The small fraction of reports that <em>do</em> get handled typically
@@ -119,8 +120,8 @@ const description =
 						<span class="category-name">Street Cleaning</span>
 						<span class="category-pct" data-placeholder>TBD%</span>
 					</div>
-					<p>Where most waste reports land. BPW closes these with
-						"does not service human waste." High closure rate, low resolution rate.</p>
+					<p>Where most waste reports land. BPW can't handle biohazards and
+						has no option to reroute — tickets are closed as out-of-scope.</p>
 					<div class="stat-callout" style="margin-top: 8px;">
 						<div class="stat-callout-row">
 							<span class="stat-callout-label">Closed without action</span>
@@ -255,7 +256,7 @@ const description =
 				<ol>
 					<li>Resident submits report describing human waste</li>
 					<li>System routes it to BPW street cleaning</li>
-					<li>BPW worker reads it, closes ticket with "does not service human waste"</li>
+					<li>BPW has no way to reroute the ticket — closes it with "does not service human waste"</li>
 					<li>Ticket shows as "closed" in city data — appears resolved, but nothing was cleaned</li>
 				</ol>
 				<div class="stat-callout">
