@@ -113,9 +113,6 @@ export default function HeatMap({
 	const markerGroupRef = useRef<L.LayerGroup | null>(null)
 	const encampmentMarkerGroupRef = useRef<L.LayerGroup | null>(null)
 	const wasteMarkerGroupRef = useRef<L.LayerGroup | null>(null)
-	const markersLoaded = useRef(false)
-	const encampmentMarkersLoaded = useRef(false)
-	const wasteMarkersLoaded = useRef(false)
 
 	const [selYear, setSelYear] = useState("all")
 	const [selMonth, setSelMonth] = useState(0)
@@ -201,6 +198,18 @@ export default function HeatMap({
 		}
 	}, [])
 
+	function filterMarker(m: MarkerData, year: string, month: number): boolean {
+		if (year !== "all") {
+			const mYear = new Date(m.dt).getFullYear()
+			if (mYear !== Number(year)) return false
+		}
+		if (month !== 0) {
+			const mMonth = new Date(m.dt).getMonth() + 1
+			if (mMonth !== month) return false
+		}
+		return true
+	}
+
 	function handleZoom(map: L.Map) {
 		const zoom = map.getZoom()
 		if (zoom >= 15) {
@@ -212,15 +221,24 @@ export default function HeatMap({
 		}
 	}
 
-	function loadMarkers(map: L.Map) {
-		const layer = dataLayer
-		if (
-			(layer === "needles" || layer === "both") &&
-			!markersLoaded.current &&
-			markerGroupRef.current
-		) {
-			markersLoaded.current = true
+	function rebuildMarkers(map: L.Map, year: string, month: number, layer: DataLayer) {
+		// Clear all existing markers
+		if (markerGroupRef.current) {
+			map.removeLayer(markerGroupRef.current)
+			markerGroupRef.current.clearLayers()
+		}
+		if (encampmentMarkerGroupRef.current) {
+			map.removeLayer(encampmentMarkerGroupRef.current)
+			encampmentMarkerGroupRef.current.clearLayers()
+		}
+		if (wasteMarkerGroupRef.current) {
+			map.removeLayer(wasteMarkerGroupRef.current)
+			wasteMarkerGroupRef.current.clearLayers()
+		}
+
+		if ((layer === "needles" || layer === "both") && markerGroupRef.current) {
 			for (const m of needleMarkers) {
+				if (!filterMarker(m, year, month)) continue
 				L.circleMarker([m.lat, m.lng], {
 					radius: 5,
 					fillColor: "#e85a1b",
@@ -234,15 +252,12 @@ export default function HeatMap({
 					)
 					.addTo(markerGroupRef.current as L.LayerGroup)
 			}
+			map.addLayer(markerGroupRef.current)
 		}
 
-		if (
-			(layer === "encampments" || layer === "both") &&
-			!encampmentMarkersLoaded.current &&
-			encampmentMarkerGroupRef.current
-		) {
-			encampmentMarkersLoaded.current = true
+		if ((layer === "encampments" || layer === "both") && encampmentMarkerGroupRef.current) {
 			for (const m of encampmentMarkers) {
+				if (!filterMarker(m, year, month)) continue
 				L.circleMarker([m.lat, m.lng], {
 					radius: 5,
 					fillColor: "#7b2d8e",
@@ -256,11 +271,12 @@ export default function HeatMap({
 					)
 					.addTo(encampmentMarkerGroupRef.current as L.LayerGroup)
 			}
+			map.addLayer(encampmentMarkerGroupRef.current)
 		}
 
-		if (layer === "waste" && !wasteMarkersLoaded.current && wasteMarkerGroupRef.current) {
-			wasteMarkersLoaded.current = true
+		if (layer === "waste" && wasteMarkerGroupRef.current) {
 			for (const m of wasteMarkers) {
+				if (!filterMarker(m, year, month)) continue
 				L.circleMarker([m.lat, m.lng], {
 					radius: 5,
 					fillColor: "#8B6914",
@@ -274,17 +290,12 @@ export default function HeatMap({
 					)
 					.addTo(wasteMarkerGroupRef.current as L.LayerGroup)
 			}
-		}
-
-		if ((layer === "needles" || layer === "both") && markerGroupRef.current) {
-			map.addLayer(markerGroupRef.current)
-		}
-		if ((layer === "encampments" || layer === "both") && encampmentMarkerGroupRef.current) {
-			map.addLayer(encampmentMarkerGroupRef.current)
-		}
-		if (layer === "waste" && wasteMarkerGroupRef.current) {
 			map.addLayer(wasteMarkerGroupRef.current)
 		}
+	}
+
+	function loadMarkers(map: L.Map) {
+		rebuildMarkers(map, selYear, selMonth, dataLayer)
 	}
 
 	// Update layers when dataLayer changes
@@ -300,23 +311,6 @@ export default function HeatMap({
 		heatLayerRef.current = null
 		encampmentHeatLayerRef.current = null
 		wasteHeatLayerRef.current = null
-
-		// Remove marker groups and clear them when switching layers
-		if (markerGroupRef.current) {
-			map.removeLayer(markerGroupRef.current)
-			markerGroupRef.current.clearLayers()
-		}
-		if (encampmentMarkerGroupRef.current) {
-			map.removeLayer(encampmentMarkerGroupRef.current)
-			encampmentMarkerGroupRef.current.clearLayers()
-		}
-		if (wasteMarkerGroupRef.current) {
-			map.removeLayer(wasteMarkerGroupRef.current)
-			wasteMarkerGroupRef.current.clearLayers()
-		}
-		markersLoaded.current = false
-		encampmentMarkersLoaded.current = false
-		wasteMarkersLoaded.current = false
 
 		// Reset filter to "all" when switching layers
 		setSelYear("all")
@@ -347,9 +341,9 @@ export default function HeatMap({
 			setWasteCount(wastePoints.length)
 		}
 
-		// Re-show markers if zoomed in
+		// Re-show markers if zoomed in (with reset "all" filters since we just reset them)
 		if (map.getZoom() >= 15) {
-			loadMarkers(map)
+			rebuildMarkers(map, "all", 0, dataLayer)
 		}
 	}, [dataLayer, ready])
 
@@ -399,6 +393,11 @@ export default function HeatMap({
 				return true
 			}).length
 			setWasteCount(filteredCount)
+		}
+
+		// Re-filter markers to match
+		if (map.getZoom() >= 15) {
+			rebuildMarkers(map, selYear, selMonth, dataLayer)
 		}
 	}, [selYear, selMonth, ready, dataLayer])
 

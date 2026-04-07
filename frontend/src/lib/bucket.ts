@@ -1,15 +1,20 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import type { MarkerData, PageStats } from "./types"
 
-const client = new S3Client({
-	endpoint: process.env.ENDPOINT || undefined,
-	region: process.env.REGION || "us-east-1",
-	credentials: {
-		accessKeyId: process.env.ACCESS_KEY_ID || "",
-		secretAccessKey: process.env.SECRET_ACCESS_KEY || "",
-	},
-	forcePathStyle: true,
-})
+const API_URL = process.env.API_URL || ""
+const USE_S3 = !!(process.env.ENDPOINT && process.env.BUCKET)
+
+const client = USE_S3
+	? new S3Client({
+			endpoint: process.env.ENDPOINT || undefined,
+			region: process.env.REGION || "us-east-1",
+			credentials: {
+				accessKeyId: process.env.ACCESS_KEY_ID || "",
+				secretAccessKey: process.env.SECRET_ACCESS_KEY || "",
+			},
+			forcePathStyle: true,
+		})
+	: null
 
 const BUCKET = process.env.BUCKET || ""
 
@@ -24,7 +29,8 @@ async function readJson<T>(key: string): Promise<T> {
 	}
 
 	const command = new GetObjectCommand({ Bucket: BUCKET, Key: key })
-	const response = await client.send(command)
+	const response = await client?.send(command)
+	if (!response) throw new Error("S3 client not configured")
 	const body = await response.Body?.transformToString()
 	if (!body) throw new Error(`Empty response for ${key}`)
 	const data = JSON.parse(body) as T
@@ -33,14 +39,68 @@ async function readJson<T>(key: string): Promise<T> {
 	return data
 }
 
-export function fetchPageStats(dataset = "needles"): Promise<PageStats> {
-	return readJson<PageStats>(`${dataset}/stats.json`)
+// Map dataset names to backend API prefixes
+const API_PREFIX: Record<string, string> = {
+	needles: "/api",
+	encampments: "/api/encampments",
 }
 
-export function fetchPoints(dataset = "needles"): Promise<number[][]> {
-	return readJson<number[][]>(`${dataset}/points.json`)
+const EMPTY_PAGE_STATS: PageStats = {
+	total: 0,
+	years: [],
+	hoods: [],
+	hourly: Array(24).fill(0) as number[],
+	year_monthly: {},
+	zip_stats: [],
+	generated: "",
+	peak_hood: "",
+	peak_hour: 0,
+	peak_dow: "",
+	avg_monthly: 0,
+	initial_heat: [],
 }
 
-export function fetchMarkers(dataset = "needles"): Promise<MarkerData[]> {
-	return readJson<MarkerData[]>(`${dataset}/markers.json`)
+interface DashboardStats extends PageStats {
+	points: number[][]
+	markers: MarkerData[]
+}
+
+// Cache the full /api/stats response so we only fetch once per dataset
+const statsCache = new Map<string, DashboardStats>()
+
+async function fetchFullStats(dataset: string): Promise<DashboardStats | null> {
+	const cached = statsCache.get(dataset)
+	if (cached) return cached
+	const prefix = API_PREFIX[dataset]
+	if (!prefix) return null
+	try {
+		const res = await fetch(`${API_URL}${prefix}/stats`)
+		if (!res.ok) return null
+		const data = (await res.json()) as DashboardStats
+		statsCache.set(dataset, data)
+		return data
+	} catch {
+		return null
+	}
+}
+
+export async function fetchPageStats(dataset = "needles"): Promise<PageStats> {
+	if (USE_S3) return readJson<PageStats>(`${dataset}/stats.json`)
+	const full = await fetchFullStats(dataset)
+	if (!full) return EMPTY_PAGE_STATS
+	return full
+}
+
+export async function fetchPoints(dataset = "needles"): Promise<number[][]> {
+	if (USE_S3) return readJson<number[][]>(`${dataset}/points.json`)
+	const full = await fetchFullStats(dataset)
+	if (!full) return []
+	return full.points
+}
+
+export async function fetchMarkers(dataset = "needles"): Promise<MarkerData[]> {
+	if (USE_S3) return readJson<MarkerData[]>(`${dataset}/markers.json`)
+	const full = await fetchFullStats(dataset)
+	if (!full) return []
+	return full.markers
 }

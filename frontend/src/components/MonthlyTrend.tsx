@@ -57,16 +57,41 @@ export default function MonthlyTrend({ yearMonthly }: MonthlyTrendProps) {
 	useEffect(() => {
 		if (!canvasRef.current) return
 
-		const datasets = Object.entries(yearMonthly).map(([yr, vals], i) => ({
-			label: yr,
-			data: vals,
-			borderColor: COLORS[i % COLORS.length],
-			backgroundColor: `${COLORS[i % COLORS.length]}22`,
-			borderWidth: 2,
-			pointRadius: 3,
-			tension: 0.3,
-			fill: false,
-		}))
+		// Data is released monthly — the most recent non-zero month in the
+		// latest year is almost certainly partial, so null it out along with
+		// all future months so the line doesn't misleadingly drop.
+		const allYears = Object.keys(yearMonthly)
+			.map(Number)
+			.sort((a, b) => a - b)
+		const latestYear = allYears[allYears.length - 1]
+		const latestVals = yearMonthly[String(latestYear)] || []
+		let lastNonZero = -1
+		for (let i = latestVals.length - 1; i >= 0; i--) {
+			if (latestVals[i] > 0) {
+				lastNonZero = i
+				break
+			}
+		}
+		// Keep months up to but NOT including the last non-zero (it's partial)
+		const cutoffMonth = lastNonZero > 0 ? lastNonZero - 1 : -1
+
+		const datasets = Object.entries(yearMonthly).map(([yr, vals], i) => {
+			let data: (number | null)[] = vals
+			if (Number(yr) === latestYear && cutoffMonth >= 0) {
+				data = vals.map((v, monthIdx) => (monthIdx > cutoffMonth ? null : v))
+			}
+			return {
+				label: yr,
+				data,
+				borderColor: COLORS[i % COLORS.length],
+				backgroundColor: `${COLORS[i % COLORS.length]}22`,
+				borderWidth: 2,
+				pointRadius: 3,
+				tension: 0.3,
+				fill: false,
+				spanGaps: false,
+			}
+		})
 
 		chartRef.current = new Chart(canvasRef.current, {
 			type: "line",
