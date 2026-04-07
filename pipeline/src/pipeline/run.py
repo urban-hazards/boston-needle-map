@@ -185,6 +185,8 @@ def _process_waste(raw_records: list[dict[str, Any]], force: bool) -> int:
     for row in all_matches:
         cleaned_rec = clean(row)
         if cleaned_rec is not None:
+            queue = row.get("queue", "")
+            cleaned_rec.source = "confirmed" if "HumanWaste" in queue else "detected"
             cleaned.append(cleaned_rec)
 
     if not cleaned:

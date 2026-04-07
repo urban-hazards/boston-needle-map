@@ -19,6 +19,7 @@ export interface MarkerData {
 	hood: string
 	street: string
 	zip: string
+	source?: "confirmed" | "detected" | null
 }
 
 export interface PageStats {

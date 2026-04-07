@@ -17,6 +17,7 @@ class CleanedRecord(BaseModel):
     street: str
     zipcode: str
     resp_hrs: float | None = None
+    source: str | None = None  # "confirmed" or "detected" (waste only)
 
 
 class NeighborhoodStat(BaseModel):
@@ -46,6 +47,7 @@ class MarkerData(BaseModel):
     hood: str
     street: str
     zip: str
+    source: str | None = None  # "confirmed" or "detected" (waste only)
 
 
 class DashboardStats(BaseModel):

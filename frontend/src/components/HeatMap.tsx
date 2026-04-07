@@ -49,6 +49,7 @@ const WASTE_GRADIENT: Record<number, string> = {
 }
 
 type DataLayer = "needles" | "encampments" | "waste" | "both"
+type WasteSource = "all" | "confirmed" | "detected"
 
 const MONTHS = [
 	"January",
@@ -65,10 +66,20 @@ const MONTHS = [
 	"December",
 ]
 
-function filterPoints(points: number[][], year: string, month: number): number[][] {
-	const filtered = points.filter(([, , yr, mo]) => {
+function filterPoints(
+	points: number[][],
+	year: string,
+	month: number,
+	sourceFilter?: WasteSource,
+): number[][] {
+	const filtered = points.filter(([, , yr, mo, src]) => {
 		if (year !== "all" && yr !== Number(year)) return false
 		if (month !== 0 && mo !== month) return false
+		if (sourceFilter && sourceFilter !== "all") {
+			const isDetected = src === 1
+			if (sourceFilter === "confirmed" && isDetected) return false
+			if (sourceFilter === "detected" && !isDetected) return false
+		}
 		return true
 	})
 	return filtered.map(([lat, lng]) => [lat, lng, 1])
@@ -100,6 +111,8 @@ export default function HeatMap({
 	const [selMonth, setSelMonth] = useState(0)
 	const [dataLayer, setDataLayer] = useState<DataLayer>("both")
 	const dataLayerRef = useRef<DataLayer>("both")
+	const [wasteSource, setWasteSource] = useState<WasteSource>("all")
+	const wasteSourceRef = useRef<WasteSource>("all")
 	const selYearRef = useRef(defaultYear)
 	const selMonthRef = useRef(0)
 	const [count, setCount] = useState(
@@ -300,17 +313,25 @@ export default function HeatMap({
 		}
 
 		if (layer === "waste" && wasteMarkerGroupRef.current) {
+			const srcFilter = wasteSourceRef.current
 			for (const m of wasteMarkers.filter(filterMarker)) {
+				if (srcFilter !== "all") {
+					const mSrc = m.source || "confirmed"
+					if (srcFilter !== mSrc) continue
+				}
+				const isDetected = m.source === "detected"
+				const color = isDetected ? "#C4841D" : "#8B6914"
+				const label = isDetected ? "Missed Report" : "311 Ticket"
 				L.circleMarker([m.lat, m.lng], {
 					radius: 5,
-					fillColor: "#8B6914",
-					fillOpacity: 0.85,
+					fillColor: color,
+					fillOpacity: isDetected ? 0.7 : 0.85,
 					color: "#fff",
 					weight: 1,
 					opacity: 0.6,
 				})
 					.bindPopup(
-						`<div style="font-size:12px;line-height:1.6;color:#222"><b style="font-size:13px;color:#8B6914;display:block">Human Waste: ${m.hood || "Unknown"}</b>${m.street || ""}<br>${m.dt}${m.zip ? ` &middot; ${m.zip}` : ""}</div>`,
+						`<div style="font-size:12px;line-height:1.6;color:#222"><b style="font-size:13px;color:${color};display:block">Human Waste (${label}): ${m.hood || "Unknown"}</b>${m.street || ""}<br>${m.dt}${m.zip ? ` &middot; ${m.zip}` : ""}</div>`,
 					)
 					.addTo(wasteMarkerGroupRef.current as L.LayerGroup)
 			}
@@ -334,6 +355,7 @@ export default function HeatMap({
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency on dataLayer
 	useEffect(() => {
 		dataLayerRef.current = dataLayer
+		wasteSourceRef.current = wasteSource
 		if (!ready || !mapInstance.current) return
 		const map = mapInstance.current
 
@@ -369,24 +391,32 @@ export default function HeatMap({
 		}
 
 		if (dataLayer === "waste") {
-			const pts = filterPoints(wastePoints, defaultYear, 0)
+			const pts = filterPoints(wastePoints, defaultYear, 0, wasteSource)
 			const layer = createHeatLayer(pts, WASTE_GRADIENT)
 			layer.addTo(map)
 			wasteHeatLayerRef.current = layer
-			setWasteCount(wastePoints.filter(([, , yr]) => String(yr) === defaultYear).length)
+			setWasteCount(
+				wastePoints.filter(([, , yr, , src]) => {
+					if (String(yr) !== defaultYear) return false
+					if (wasteSource === "confirmed" && src === 1) return false
+					if (wasteSource === "detected" && src !== 1) return false
+					return true
+				}).length,
+			)
 		}
 
 		// Re-show markers if zoomed in and pins enabled
 		if (showPins && map.getZoom() >= 15) {
 			rebuildMarkers(map)
 		}
-	}, [dataLayer, ready])
+	}, [dataLayer, wasteSource, ready])
 
 	// Filter heatmap data client-side when filter changes
-	// biome-ignore lint/correctness/useExhaustiveDependencies: filtering depends on selYear/selMonth/dataLayer
+	// biome-ignore lint/correctness/useExhaustiveDependencies: filtering depends on selYear/selMonth/dataLayer/wasteSource
 	useEffect(() => {
 		selYearRef.current = selYear
 		selMonthRef.current = selMonth
+		wasteSourceRef.current = wasteSource
 		if (!ready || !mapInstance.current) return
 		const map = mapInstance.current
 
@@ -420,13 +450,15 @@ export default function HeatMap({
 
 		if (dataLayer === "waste") {
 			if (wasteHeatLayerRef.current) map.removeLayer(wasteHeatLayerRef.current)
-			const pts = filterPoints(wastePoints, selYear, selMonth)
+			const pts = filterPoints(wastePoints, selYear, selMonth, wasteSource)
 			const layer = createHeatLayer(pts, WASTE_GRADIENT)
 			layer.addTo(map)
 			wasteHeatLayerRef.current = layer
-			const filteredCount = wastePoints.filter(([, , yr, mo]) => {
+			const filteredCount = wastePoints.filter(([, , yr, mo, src]) => {
 				if (selYear !== "all" && yr !== Number(selYear)) return false
 				if (selMonth !== 0 && mo !== selMonth) return false
+				if (wasteSource === "confirmed" && src === 1) return false
+				if (wasteSource === "detected" && src !== 1) return false
 				return true
 			}).length
 			setWasteCount(filteredCount)
@@ -436,7 +468,7 @@ export default function HeatMap({
 		if (map.getZoom() >= 15) {
 			rebuildMarkers(map)
 		}
-	}, [selYear, selMonth, ready, dataLayer])
+	}, [selYear, selMonth, ready, dataLayer, wasteSource])
 
 	const showFilterPanel = !isMobile || filterOpen
 
@@ -557,6 +589,21 @@ export default function HeatMap({
 							Show pins when zoomed in
 						</label>
 
+						{dataLayer === "waste" && (
+							<div style={{ marginBottom: 8 }}>
+								<div style={filterLabelStyle}>Source</div>
+								<select
+									value={wasteSource}
+									onChange={(e) => setWasteSource(e.target.value as WasteSource)}
+									style={selectStyle}
+								>
+									<option value="all">All Reports</option>
+									<option value="confirmed">311 Tickets</option>
+									<option value="detected">Missed (ML)</option>
+								</select>
+							</div>
+						)}
+
 						<div style={{ marginBottom: 8 }}>
 							<div style={filterLabelStyle}>Year</div>
 							<select
@@ -631,7 +678,12 @@ export default function HeatMap({
 					)}
 					{dataLayer === "waste" && (
 						<span style={{ color: "#8B6914" }}>
-							<strong>{wasteCount.toLocaleString()}</strong> human waste reports
+							<strong>{wasteCount.toLocaleString()}</strong>{" "}
+							{wasteSource === "confirmed"
+								? "confirmed 311 tickets"
+								: wasteSource === "detected"
+									? "missed reports (ML)"
+									: "human waste reports"}
 							<span style={{ fontSize: "10px", opacity: 0.7 }}> (beta)</span>
 						</span>
 					)}
