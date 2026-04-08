@@ -12,14 +12,36 @@
 - **Git workflow:** PRs required for main; CI checks must pass before merge
 
 ## Pipeline Commands (run from `pipeline/`)
-- `uv run boston-pipeline run` -- run full pipeline (all datasets)
-- `uv run boston-pipeline run -d needles` -- run single dataset
-- `uv run boston-pipeline run -d waste --force` -- force re-fetch from CKAN
-- `uv run boston-pipeline run --verbose` -- debug logging
+- `uv run boston-pipeline` -- run full pipeline (all datasets)
+- `uv run boston-pipeline -d needles` -- run single dataset
+- `uv run boston-pipeline -d waste --force` -- force re-fetch from CKAN
+- `uv run boston-pipeline --verbose` -- debug logging
 - `uv run ruff check src/ tests/` -- lint
 - `uv run ruff format src/ tests/` -- format
 - `uv run mypy src/` -- type check
 - `uv run pytest` -- run tests
+
+## Local Development (storage)
+The pipeline writes to an S3-compatible bucket (Tigris in prod). Locally we run
+**MinIO** via docker compose so nothing real is needed.
+
+- `docker compose up -d` (from repo root) -- start MinIO + auto-create `boston-hazards` bucket
+- `docker compose down` -- stop (data persists in the `minio-data` volume)
+- `docker compose down -v` -- stop and wipe bucket contents
+- MinIO web console: http://localhost:9001 (login: `minioadmin` / `minioadmin`)
+- S3 API endpoint: http://localhost:9000
+
+**Env vars:** `pipeline/src/pipeline/config.py` auto-loads a `.env` file via
+`python-dotenv` before reading env vars. To set up:
+1. `cp pipeline/.env.example pipeline/.env`
+2. Run any pipeline command -- it will point at MinIO automatically.
+
+Real environment variables always override `.env` values, so Railway's prod vars
+take precedence when deployed.
+
+**Note on spaCy:** `en_core_web_sm` is installed ad-hoc (not in pyproject.toml).
+If `uv sync` removes it, reinstall with:
+`uv run python -m spacy download en_core_web_sm`
 
 ## Frontend Commands (run from `frontend/`)
 - `pnpm dev` -- start dev server on :4321

@@ -1,26 +1,30 @@
 """Shared test fixtures."""
 
 import os
-from collections.abc import Generator
-from typing import Any
 
-import boto3
-import pytest
-from moto import mock_aws
+# Set env vars at module-import time, BEFORE any pipeline import triggers
+# `load_dotenv()` inside pipeline.config. Because load_dotenv defaults to
+# override=False, these values take precedence over any local .env file.
+# In particular, ENDPOINT must be empty so boto3 routes to moto's mock
+# instead of a running MinIO instance on localhost:9000.
+os.environ.setdefault("BUCKET", "test-bucket")
+os.environ.setdefault("ACCESS_KEY_ID", "testing")
+os.environ.setdefault("SECRET_ACCESS_KEY", "testing")
+os.environ.setdefault("REGION", "us-east-1")
+os.environ["ENDPOINT"] = ""
+
+from collections.abc import Generator  # noqa: E402
+from typing import Any  # noqa: E402
+
+import boto3  # noqa: E402
+import pytest  # noqa: E402
+from moto import mock_aws  # noqa: E402
 
 
 @pytest.fixture
 def s3_bucket() -> Generator[tuple[Any, str], None, None]:
     """Create a mock S3 bucket using moto."""
     bucket_name = "test-bucket"
-
-    # Set env vars before importing storage (which caches the client)
-    os.environ["BUCKET"] = bucket_name
-    os.environ["ACCESS_KEY_ID"] = "testing"
-    os.environ["SECRET_ACCESS_KEY"] = "testing"
-    os.environ["REGION"] = "us-east-1"
-    # Clear endpoint so boto3 uses moto's mock
-    os.environ.pop("ENDPOINT", None)
 
     with mock_aws():
         client = boto3.client("s3", region_name="us-east-1")

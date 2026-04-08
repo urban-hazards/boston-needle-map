@@ -191,6 +191,8 @@ def fetch_encampment_year(year: int) -> list[dict[str, Any]]:
     """
     seen_ids: set[str] = set()
     all_records: list[dict[str, Any]] = []
+    type_count = 0
+    queue_new_count = 0
 
     # Strategy 1: fetch by type (2025+)
     if year >= ENCAMPMENT_START_YEAR:
@@ -200,6 +202,7 @@ def fetch_encampment_year(year: int) -> list[dict[str, Any]]:
             if cid and cid not in seen_ids:
                 seen_ids.add(cid)
                 all_records.append(r)
+                type_count += 1
 
     # Strategy 2: fetch by queue (2023+)
     if year >= ENCAMPMENT_QUEUE_START_YEAR:
@@ -209,13 +212,14 @@ def fetch_encampment_year(year: int) -> list[dict[str, Any]]:
             if cid and cid not in seen_ids:
                 seen_ids.add(cid)
                 all_records.append(r)
+                queue_new_count += 1
 
     logger.info(
         "Encampments %d: %d total (%d from type, %d new from queues)",
         year,
         len(all_records),
-        len(seen_ids) - len(all_records) + len(all_records),
-        len(all_records) - len([r for r in all_records if r.get("type") in ENCAMPMENT_TYPES]),
+        type_count,
+        queue_new_count,
     )
     return all_records
 

@@ -2,6 +2,12 @@
 
 import os
 
+from dotenv import load_dotenv
+
+# Load .env from the pipeline directory (or any parent) if present.
+# Real env vars always win over .env values.
+load_dotenv()
+
 # --- CKAN / Open311 API ---
 
 CKAN_BASE = "https://data.boston.gov/api/3/action"

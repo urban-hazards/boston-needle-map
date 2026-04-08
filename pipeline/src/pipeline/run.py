@@ -52,12 +52,16 @@ def _fetch_dataset_years(
         if year < start_year:
             continue
 
-        s3_key = f"raw/{dataset}_{year}.json"
+        # Encampments uses a versioned cache key: pre-PR runs cached
+        # type-only data under `raw/encampments_{year}.json`. The new
+        # combined type + queue fetcher writes to `_v2_` so old caches
+        # are ignored on first deploy (no `--force` needed).
+        s3_key = f"raw/encampments_v2_{year}.json" if dataset == "encampments" else f"raw/{dataset}_{year}.json"
         is_current = year == current_year
 
         # Use cached raw data if available and not current year
         if not force and not is_current and storage.file_exists(s3_key):
-            logger.info("Loading cached raw/%s_%d.json from S3", dataset, year)
+            logger.info("Loading cached %s from S3", s3_key)
             cached = storage.read_json(s3_key)
             if cached is not None:
                 all_raw.extend(cached)
