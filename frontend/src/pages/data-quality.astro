@@ -1,0 +1,592 @@
+---
+import Footer from "../components/Footer.astro"
+import Header from "../components/Header.astro"
+import BaseLayout from "../layouts/BaseLayout.astro"
+import { fetchPageStats } from "../lib/bucket"
+import "../styles/global.css"
+
+const stats = await fetchPageStats("needles")
+const wasteStats = await fetchPageStats("waste")
+const rs = (wasteStats as Record<string, any>)?.routing_stats as
+	| { closed_no_action_pct: number; bpw_rejection_pct: number; contractor_dispatch_pct: number }
+	| undefined
+---
+
+<BaseLayout
+	title="What Happens After You Report Human Waste in Boston — Boston Urban Hazard Maps"
+	description="You file a 311 report. The city closes it. The waste is still there. Here's what the data shows about how Boston handles — and loses — human waste complaints."
+	canonical="https://www.urbanhazardmaps.com/data-quality"
+>
+	<Header generated={stats.generated} />
+
+	<main class="container" style="padding-top: 32px; padding-bottom: 48px;">
+		<nav class="breadcrumb" aria-label="Breadcrumb">
+			<a href="/">Home</a> <span aria-hidden="true">/</span> <span>Data Quality</span>
+		</nav>
+
+		<h1 class="page-title">What Happens After You Report Human Waste in Boston</h1>
+		<p class="page-subtitle">
+			You see human feces on the sidewalk. You open the 311 app and file a report.
+			You expect someone to come clean it up. Here's what actually happens —
+			based on every public record the city has released.
+		</p>
+
+		<!-- ============================================ -->
+		<!-- SECTION 1: Your ticket gets closed, nothing happens -->
+		<!-- ============================================ -->
+		<section class="section">
+			<h2 class="section-title">1. Your Report Gets Closed — But Nothing Happens</h2>
+			<div class="card prose">
+				<p>
+					"Closed" in Boston's 311 system does not mean "resolved." It means the
+					ticket was marked complete — even when the receiving department had no
+					way to act on it or send it to someone who could. For human waste reports,
+					the data tells a stark story:
+				</p>
+				{rs && (
+					<div class="stats-grid">
+						<div class="stat-item stat-bad">
+							<span class="stat-number">{rs.closed_no_action_pct.toFixed(1)}%</span>
+							<span class="stat-desc">closed with no evidence of action</span>
+						</div>
+						<div class="stat-item">
+							<span class="stat-number">{rs.bpw_rejection_pct.toFixed(1)}%</span>
+							<span class="stat-desc">rejected — "BPW does not service human waste"</span>
+						</div>
+						<div class="stat-item">
+							<span class="stat-number">{rs.contractor_dispatch_pct.toFixed(1)}%</span>
+							<span class="stat-desc">sent to outside contractor (no follow-up)</span>
+						</div>
+					</div>
+				)}
+				<div class="example-box">
+					<div class="example-title">Real ticket — 5 reports, same morning</div>
+					<div class="example-content">
+						<div class="example-field">
+							<span class="field-label">Closure note:</span>
+							"BPW does not service human waste on public streets. Case was sent
+							to outside contractor"
+						</div>
+						<div class="example-field">
+							<span class="field-label">Result:</span>
+							All 5 tickets bulk-closed between 7:01 AM and 7:54 AM on May 20, 2025.
+							No contractor response recorded. No confirmation the waste was cleaned.
+						</div>
+					</div>
+					<p class="example-note">
+						Five residents reported a problem. The city's data says all five are "resolved."
+						The closure note says the department that received the tickets can't handle them.
+					</p>
+				</div>
+				<p>
+					Many other waste tickets have no closure reason at all — just an empty field
+					and a closed status. The ticket disappears from the queue without any
+					record of what happened.
+				</p>
+				<div class="fix-box">
+					<strong>What should change:</strong> Closed tickets with rejection language
+					("does not service," "sent to contractor") should automatically reopen or
+					escalate — not count as resolved. A simple text check on closure notes
+					could catch this today.
+				</div>
+			</div>
+		</section>
+
+		<!-- ============================================ -->
+		<!-- SECTION 2: There's no button for human waste -->
+		<!-- ============================================ -->
+		<section class="section">
+			<h2 class="section-title">2. There's No Button for Human Waste</h2>
+			<div class="card prose">
+				<p>
+					Boston's 311 app has 162+ ticket types. Not one of them is "human waste,"
+					"biohazard," or anything close. When you report feces on the sidewalk,
+					you pick the closest thing you can find: <strong>"Requests for Street Cleaning."</strong>
+				</p>
+				<p>
+					That means your biohazard report gets routed to a street sweeper. The crew
+					that shows up isn't equipped for it. The ticket either gets rejected
+					("BPW does not service human waste") or silently closed.
+				</p>
+				<div class="example-box">
+					<div class="example-title">What a resident actually reported</div>
+					<div class="example-content">
+						<div class="example-field">
+							<span class="field-label">Category selected:</span> Requests for Street Cleaning
+						</div>
+						<div class="example-field">
+							<span class="field-label">What they wrote:</span>
+							"BIOHAZARD! Gentleman decided the sidewalk next to my house looked like
+							a nice place to have a bowel movement. Although it may look like just
+							urine, it is not. Please clean this up."
+						</div>
+						<div class="example-field">
+							<span class="field-label">City's response:</span>
+							"Case Resolved the site was cleaned"
+						</div>
+					</div>
+					<p class="example-note">
+						This resident clearly described a biohazard. The system categorized it as
+						street cleaning because no better option exists. In the city's data,
+						this is indistinguishable from a request to sweep leaves.
+					</p>
+				</div>
+				<p>
+					Other cities have solved this.
+					<a href="https://sf311.org/services/human-animal-waste" target="_blank" rel="noopener">San Francisco</a>
+					added a "Human or Animal Waste" category in 2008 with a 12–24 hour SLA.
+					<a href="https://www.portland.gov/transportation/maintenance/report-biohazard" target="_blank" rel="noopener">Portland</a>
+					routes biohazards to a dedicated team. Boston's 311 system is currently
+					<a href="/fix">migrating to new software</a> — this is the window to add it.
+				</p>
+				<div class="fix-box">
+					<strong>What should change:</strong> Add a "Human Waste / Biohazard" category
+					to the 311 app. Route it to the correct response team — not street sweeping.
+					This is a configuration change, not a technology problem.
+					<a href="/fix">See our full proposal →</a>
+				</div>
+			</div>
+		</section>
+
+		<!-- ============================================ -->
+		<!-- SECTION 3: Waste never reaches the right team -->
+		<!-- ============================================ -->
+		<section class="section">
+			<h2 class="section-title">3. The Waste Never Reaches the Right Team</h2>
+			<div class="card prose">
+				<p>
+					Here's the routing chain for a human waste report in Boston:
+				</p>
+				<ol class="routing-chain">
+					<li>Resident reports "feces on sidewalk" via 311 app</li>
+					<li>No matching category → resident selects "Street Cleaning"</li>
+					<li>Ticket goes to Bureau of Public Works (BPW) street sweeping</li>
+					<li>BPW closes it: "does not service human waste on public streets"</li>
+					<li>Some tickets note "sent to outside contractor" — but no contractor ticket is created</li>
+					<li>No department is accountable. No SLA. No follow-up.</li>
+				</ol>
+				<p>
+					Workers who receive these tickets have no way to reroute them. The
+					system gives them one option: close it. The report goes to the wrong
+					team, and the rejection is counted as a resolution. There is no
+					department in Boston's 311 system whose job it is to handle human
+					waste on public streets.
+				</p>
+				<div class="fix-box">
+					<strong>What should change:</strong> Assign a response team for human waste.
+					Whether that's a city crew, a contracted vendor, or an extension of the
+					existing needle cleanup program — someone needs to own it. Right now, no one does.
+				</div>
+			</div>
+		</section>
+
+		<!-- ============================================ -->
+		<!-- SECTION 4: People report the same spot over and over -->
+		<!-- ============================================ -->
+		<section class="section">
+			<h2 class="section-title">4. People Report the Same Spot Over and Over</h2>
+			<div class="card prose">
+				<p>
+					When a report gets closed without action, some residents try again.
+					Same location, same problem, new ticket. These repeat reporters are a
+					signal — they represent the fraction of people frustrated enough to go
+					through the process twice. Most people give up after the first time.
+				</p>
+				<p>
+					We're building an analysis to detect these "frustration clusters" —
+					locations with multiple reports for the same problem within a short window.
+					Each cluster is evidence of a systemic failure: a place where the city's
+					process isn't working and residents know it.
+				</p>
+				<div class="impact-box">
+					<strong>Coming soon:</strong> We're developing a model to identify repeat-report
+					locations and measure how many attempts it takes before a problem gets resolved —
+					if it ever does. Follow our progress on
+					<a href="https://github.com/urban-hazards/urban-hazard-maps/issues/47"
+						target="_blank" rel="noopener">GitHub</a>.
+				</div>
+			</div>
+		</section>
+
+		<!-- ============================================ -->
+		<!-- SECTION 5: The city strips the most useful field -->
+		<!-- ============================================ -->
+		<section class="section">
+			<h2 class="section-title">5. The City Strips the Most Useful Field from Public Data</h2>
+			<div class="card prose">
+				<p>
+					When you write a description in your 311 report — "human feces on the
+					sidewalk" or "needles in the park near the playground" — that text is
+					the most important part of the record. It's where the real information is.
+				</p>
+				<p>
+					<strong>Boston removes this field entirely from the public data export.</strong>
+					The dataset on
+					<a href="https://data.boston.gov/dataset/311-service-requests" target="_blank" rel="noopener">Analyze Boston</a>
+					includes timestamps, location, department, and closure reason — but the
+					original description is gone. Zero percent of records have it.
+				</p>
+				<p>
+					The description <em>does</em> exist in a separate system — the
+					<a href="https://boston2-production.spotmobile.net/open311/v2/services.json"
+						target="_blank" rel="noopener">Open311 API</a> —
+					but you have to request each ticket individually. There's no bulk endpoint.
+					We enrich targeted records this way for our
+					<a href="/methodology">waste classifier</a>, but it's slow and incomplete.
+				</p>
+				<p>
+					Without descriptions, anyone analyzing this data — journalists, researchers,
+					the city itself — is working blind. You can't find human waste reports
+					by reading "Requests for Street Cleaning." You need the text the resident wrote.
+				</p>
+				<div class="fix-box">
+					<strong>What should change:</strong> Include the description field in the
+					public data export, with personal information redacted. Other cities
+					publish descriptions. Boston already publishes the closure reason — the
+					original report deserves the same treatment.
+				</div>
+			</div>
+		</section>
+
+		<!-- ============================================ -->
+		<!-- SECTION 6: Missing and inconsistent data -->
+		<!-- ============================================ -->
+		<section class="section">
+			<h2 class="section-title">6. Missing and Inconsistent Data</h2>
+			<div class="card prose">
+				<p>
+					Even the fields that are published have gaps. In the 2024 street cleaning
+					data (22,539 records):
+				</p>
+				<div class="stats-grid">
+					<div class="stat-item">
+						<span class="stat-number">24.3%</span>
+						<span class="stat-desc">missing zip code</span>
+					</div>
+					<div class="stat-item">
+						<span class="stat-number">5.3%</span>
+						<span class="stat-desc">missing close date (can't compute response time)</span>
+					</div>
+					<div class="stat-item">
+						<span class="stat-number">0.02%</span>
+						<span class="stat-desc">missing GPS coordinates</span>
+					</div>
+				</div>
+				<p>
+					Category names change over time — "Needle Pickup," "Needle Clean-up," and
+					"Needle Cleanup" are three different strings for the same service. "Encampments"
+					only appears starting in 2025. Our pipeline normalizes these, but any analysis
+					that doesn't will undercount.
+				</p>
+				<p>
+					Timestamps don't include timezone information. The structured data appears
+					to be in UTC, but closure notes include Eastern time. Without conversion,
+					it looks like Boston's peak 311 reporting hour is 4 AM — which makes no sense.
+					After converting to Eastern, the peak shifts to late morning. Our pipeline
+					now handles this conversion, but any downstream consumer of the raw data
+					who doesn't know about the offset will get wrong results.
+				</p>
+			</div>
+		</section>
+
+		<!-- ============================================ -->
+		<!-- SECTION 7: Open311 API exposes personal info -->
+		<!-- ============================================ -->
+		<section class="section">
+			<h2 class="section-title">7. The Backup API Exposes Personal Information</h2>
+			<div class="card prose">
+				<p>
+					The Open311 API at <code>boston2-production.spotmobile.net</code> — the same
+					one we use to retrieve stripped descriptions — returns reporter names, email
+					addresses, and phone numbers when queried with <code>?extensions=true</code>.
+					No API key required. Anyone who knows the endpoint can access it.
+				</p>
+				<p>
+					<strong>We do not store, display, or use any personal information.</strong>
+					Our pipeline reads only the description field for classification. But the
+					fact that PII is openly accessible is a privacy issue the city should address.
+				</p>
+			</div>
+		</section>
+
+		<!-- ============================================ -->
+		<!-- What this means -->
+		<!-- ============================================ -->
+		<section class="section">
+			<h2 class="section-title">What This Means</h2>
+			<div class="card prose">
+				<p>
+					Every number on this site is an undercount. Records without coordinates
+					get dropped. Reports filed under wrong categories get missed. Descriptions
+					that would help classification are stripped from the public data.
+					"Closed" doesn't mean "resolved." And there's no way to know how many
+					people saw a problem, thought about reporting it, and didn't bother.
+				</p>
+				<p>
+					These aren't obscure technical bugs — they're design choices that make it
+					impossible to see how the city handles human waste on public streets. The
+					data exists. The infrastructure exists. What's missing is the configuration
+					and the accountability.
+				</p>
+				<p>
+					We publish our <a href="/methodology">methodology</a> and
+					<a href="https://github.com/urban-hazards/urban-hazard-maps"
+						target="_blank" rel="noopener">source code</a> so you can verify
+					everything here. If you find something we got wrong,
+					<a href="https://github.com/urban-hazards/urban-hazard-maps/discussions"
+						target="_blank" rel="noopener">let us know</a>.
+				</p>
+			</div>
+		</section>
+
+		<div style="display: flex; gap: 12px; justify-content: center; margin-top: 32px; flex-wrap: wrap;">
+			<a href="/fix" class="nav-link">How to fix this &rarr;</a>
+			<a href="/methodology" class="nav-link">How the classifier works &rarr;</a>
+			<a href="/" class="nav-link">&larr; Back to the map</a>
+		</div>
+	</main>
+
+	<Footer />
+</BaseLayout>
+
+<style>
+	.breadcrumb {
+		font-size: var(--fs-sm);
+		color: var(--color-text-muted);
+		margin-bottom: var(--sp-md);
+	}
+
+	.breadcrumb a {
+		color: var(--color-blue);
+	}
+
+	.breadcrumb span {
+		margin: 0 4px;
+	}
+
+	.page-title {
+		font-size: var(--fs-2xl);
+		margin-bottom: 8px;
+		position: relative;
+		padding-bottom: 16px;
+	}
+
+	.page-title::after {
+		content: "";
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		width: 60px;
+		height: 3px;
+		background: var(--color-accent);
+		border-radius: 2px;
+	}
+
+	.page-subtitle {
+		font-size: var(--fs-md);
+		line-height: 1.7;
+		color: var(--color-text-muted);
+		margin-bottom: var(--sp-xl);
+		max-width: 900px;
+	}
+
+	.prose {
+		line-height: 1.8;
+		font-size: var(--fs-base);
+		color: var(--color-text-muted);
+		border-left: 3px solid var(--color-teal);
+	}
+
+	.prose p {
+		margin-bottom: 14px;
+	}
+
+	.prose p:last-child {
+		margin-bottom: 0;
+	}
+
+	.prose ol,
+	.prose ul {
+		margin: 12px 0;
+		padding-left: 24px;
+	}
+
+	.prose li {
+		margin-bottom: 8px;
+	}
+
+	.prose em {
+		background: var(--color-accent-light);
+		padding: 1px 4px;
+		border-radius: 3px;
+		font-style: normal;
+		font-size: var(--fs-sm);
+		font-family: monospace;
+	}
+
+	.prose code {
+		background: var(--color-surface-alt);
+		border: 1px solid var(--color-border-light);
+		padding: 1px 5px;
+		border-radius: 3px;
+		font-size: var(--fs-sm);
+	}
+
+	.routing-chain {
+		background: var(--color-surface-alt);
+		border: 1px solid var(--color-border-light);
+		border-radius: var(--radius-sm);
+		padding: 16px 16px 16px 36px;
+		margin: 14px 0;
+		font-size: var(--fs-sm);
+		line-height: 1.8;
+	}
+
+	.routing-chain li {
+		padding-left: 4px;
+	}
+
+	.routing-chain li::marker {
+		font-weight: 700;
+		color: var(--color-text);
+	}
+
+	.impact-box {
+		background: #e8f4fd;
+		border: 1px solid #b8daff;
+		border-radius: var(--radius-sm);
+		padding: 12px 16px;
+		margin: 14px 0;
+		font-size: var(--fs-sm);
+		line-height: 1.6;
+		color: #0c5460;
+	}
+
+	.fix-box {
+		background: #d4edda;
+		border: 1px solid #28a745;
+		border-radius: var(--radius-sm);
+		padding: 12px 16px;
+		margin: 14px 0;
+		font-size: var(--fs-sm);
+		line-height: 1.6;
+		color: #155724;
+	}
+
+	.example-box {
+		background: var(--color-surface-alt);
+		border: 1px solid var(--color-border-light);
+		border-radius: var(--radius-sm);
+		padding: 16px;
+		margin: 14px 0;
+	}
+
+	.example-title {
+		font-size: var(--fs-sm);
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		color: var(--color-text);
+		margin-bottom: 10px;
+	}
+
+	.example-content {
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		padding: 12px;
+		font-size: var(--fs-sm);
+		font-family: monospace;
+		line-height: 1.6;
+	}
+
+	.example-field {
+		padding: 4px 0;
+		border-bottom: 1px solid var(--color-border-light);
+	}
+
+	.example-field:last-child {
+		border-bottom: none;
+	}
+
+	.field-label {
+		font-weight: 700;
+		color: var(--color-text);
+	}
+
+	.example-note {
+		font-size: var(--fs-sm);
+		color: var(--color-text-muted);
+		margin-top: 10px;
+		line-height: 1.6;
+	}
+
+	.stats-grid {
+		display: flex;
+		gap: 16px;
+		margin: 16px 0;
+		flex-wrap: wrap;
+	}
+
+	.stat-item {
+		flex: 1;
+		min-width: 140px;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		padding: 14px;
+		text-align: center;
+	}
+
+	.stat-item.stat-bad {
+		border-color: #dc3545;
+		background: #fff5f5;
+	}
+
+	.stat-item.stat-bad .stat-number {
+		color: #dc3545;
+	}
+
+	.stat-number {
+		display: block;
+		font-size: 28px;
+		font-weight: 700;
+		color: var(--color-accent);
+		line-height: 1;
+		margin-bottom: 6px;
+	}
+
+	.stat-desc {
+		font-size: var(--fs-sm);
+		color: var(--color-text-muted);
+		line-height: 1.4;
+	}
+
+	.nav-link {
+		display: inline-block;
+		font-size: var(--fs-base);
+		color: var(--color-blue);
+		padding: 8px 20px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-md);
+		transition:
+			background var(--transition),
+			border-color var(--transition);
+	}
+
+	.nav-link:hover {
+		background: var(--color-blue-light);
+		border-color: var(--color-blue);
+		text-decoration: none;
+	}
+
+	@media (max-width: 768px) {
+		.stats-grid {
+			flex-direction: column;
+		}
+
+		.page-title {
+			font-size: 22px;
+		}
+	}
+</style>
