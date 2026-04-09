@@ -50,6 +50,7 @@ const EMPTY_PAGE_STATS: PageStats = {
 	years: [],
 	hoods: [],
 	hourly: Array(24).fill(0) as number[],
+	year_hourly: {},
 	year_monthly: {},
 	zip_stats: [],
 	generated: "",
