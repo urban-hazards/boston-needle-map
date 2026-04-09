@@ -7,7 +7,7 @@ import "../styles/global.css"
 
 const stats = await fetchPageStats("needles")
 const wasteStats = await fetchPageStats("waste")
-const rs = (wasteStats as Record<string, any>)?.routing_stats as
+const rs = (wasteStats as unknown as Record<string, unknown>)?.routing_stats as
 	| { closed_no_action_pct: number; bpw_rejection_pct: number; contractor_dispatch_pct: number }
 	| undefined
 ---
