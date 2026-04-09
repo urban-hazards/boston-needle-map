@@ -37,7 +37,12 @@ const [
 function addSlugs(hoods: typeof stats.hoods) {
 	return hoods.map((h) => ({
 		...h,
-		slug: h.slug || h.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+		slug:
+			h.slug ||
+			h.name
+				.toLowerCase()
+				.replace(/[^a-z0-9]+/g, "-")
+				.replace(/^-|-$/g, ""),
 	}))
 }
 const neighborhoods = addSlugs(stats.hoods)

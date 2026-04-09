@@ -81,11 +81,10 @@ export default function NeighborhoodTable({ datasets }: NeighborhoodTableProps) 
 
 			{hoods.length > 0 && (
 				<p style={descStyle}>
-					The table below shows the distribution of <strong>{activeType.toLowerCase()}</strong> requests
-					across Boston neighborhoods.{" "}
-					<strong>{hoods[0].name}</strong> leads with{" "}
-					<strong>{formatNumber(hoods[0].count)}</strong> requests
-					({hoods[0].pct}% of {formatNumber(total)} total), with the most reported location being{" "}
+					The table below shows the distribution of <strong>{activeType.toLowerCase()}</strong>{" "}
+					requests across Boston neighborhoods. <strong>{hoods[0].name}</strong> leads with{" "}
+					<strong>{formatNumber(hoods[0].count)}</strong> requests ({hoods[0].pct}% of{" "}
+					{formatNumber(total)} total), with the most reported location being{" "}
 					<strong>{hoods[0].top_street}</strong>.
 				</p>
 			)}
@@ -100,7 +99,9 @@ export default function NeighborhoodTable({ datasets }: NeighborhoodTableProps) 
 								<th style={{ ...thStyle, textAlign: "right" }}>Requests</th>
 								<th style={{ ...thStyle, textAlign: "right" }}>Share</th>
 								{!hideDetail && <th style={thStyle}>Top Street</th>}
-								{!hideDetail && <th style={{ ...thStyle, textAlign: "right" }}>Avg Response (hrs)</th>}
+								{!hideDetail && (
+									<th style={{ ...thStyle, textAlign: "right" }}>Avg Response (hrs)</th>
+								)}
 							</tr>
 						</thead>
 						<tbody>
@@ -114,7 +115,10 @@ export default function NeighborhoodTable({ datasets }: NeighborhoodTableProps) 
 										}}
 									>
 										<td style={tdStyle}>
-											<a href={`/neighborhoods/${h.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
+											<a
+												href={`/neighborhoods/${h.slug}`}
+												style={{ color: "inherit", textDecoration: "none" }}
+											>
 												{h.name}
 											</a>
 										</td>
@@ -132,12 +136,22 @@ export default function NeighborhoodTable({ datasets }: NeighborhoodTableProps) 
 												</div>
 											</td>
 										)}
-										<td style={{ ...tdStyle, textAlign: "right", color, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+										<td
+											style={{
+												...tdStyle,
+												textAlign: "right",
+												color,
+												fontWeight: 600,
+												fontVariantNumeric: "tabular-nums",
+											}}
+										>
 											{formatNumber(h.count)}
 										</td>
 										<td style={{ ...tdStyle, textAlign: "right" }}>{h.pct}%</td>
 										{!hideDetail && <td style={{ ...tdStyle, ...streetStyle }}>{h.top_street}</td>}
-										{!hideDetail && <td style={{ ...tdStyle, textAlign: "right" }}>{h.avg_resp}</td>}
+										{!hideDetail && (
+											<td style={{ ...tdStyle, textAlign: "right" }}>{h.avg_resp}</td>
+										)}
 									</tr>
 								)
 							})}
@@ -208,4 +222,3 @@ const streetStyle: React.CSSProperties = {
 	textOverflow: "ellipsis",
 	whiteSpace: "nowrap",
 }
-
