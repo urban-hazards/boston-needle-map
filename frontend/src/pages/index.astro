@@ -4,7 +4,7 @@ import Header from "../components/Header.astro"
 import HeatMap from "../components/HeatMap"
 import HourlyChart from "../components/HourlyChart"
 import MonthlyTrend from "../components/MonthlyTrend"
-import NeighborhoodTable from "../components/NeighborhoodTable.astro"
+import NeighborhoodTable from "../components/NeighborhoodTable"
 import StatsOverview from "../components/StatsOverview.astro"
 import ZipCodeList from "../components/ZipCodeList.astro"
 import BaseLayout from "../layouts/BaseLayout.astro"
@@ -34,13 +34,15 @@ const [
 	fetchMarkers("waste"),
 ])
 
-const neighborhoods = stats.hoods.map((h) => ({
-	...h,
-	slug: h.name
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-|-$/g, ""),
-}))
+function addSlugs(hoods: typeof stats.hoods) {
+	return hoods.map((h) => ({
+		...h,
+		slug: h.slug || h.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+	}))
+}
+const neighborhoods = addSlugs(stats.hoods)
+const encampmentNeighborhoods = addSlugs(encampmentStats.hoods)
+const wasteNeighborhoods = addSlugs(wasteStats.hoods)
 
 const title = `Boston Urban Hazard Maps — ${formatNumber(stats.total + encampmentStats.total)} Reports Analyzed`
 const description = `Interactive heatmap and analysis of ${formatNumber(stats.total)} sharps and ${formatNumber(encampmentStats.total)} encampment reports from Boston's 311 system across ${stats.hoods.length} neighborhoods. Data from ${stats.years[0]}–${stats.years[stats.years.length - 1]}.`
@@ -111,7 +113,14 @@ const description = `Interactive heatmap and analysis of ${formatNumber(stats.to
 			</div>
 		</section>
 
-		<NeighborhoodTable neighborhoods={neighborhoods} />
+		<NeighborhoodTable
+			client:visible
+			datasets={{
+				Sharps: { hoods: neighborhoods, years: stats.years, label: "Sharps", color: "#e85a1b" },
+				Encampments: { hoods: encampmentNeighborhoods, years: encampmentStats.years, label: "Encampments", color: "#7b2d8e" },
+				"Human Waste": { hoods: wasteNeighborhoods, years: wasteStats.years, label: "Human Waste", color: "#8B6914" },
+			}}
+		/>
 
 		<ZipCodeList zipStats={stats.zip_stats} />
 
