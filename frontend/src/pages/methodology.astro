@@ -13,7 +13,19 @@ const description =
 	"How we use NLP to detect human waste reports hidden in Boston's 311 street cleaning data. Keyword scoring, false positive prevention, and validation results."
 ---
 
-<BaseLayout title={title} description={description} canonical="https://www.urbanhazardmaps.com/methodology">
+<BaseLayout title={title} description={description} jsonLd={{
+	"@context": "https://schema.org",
+	"@type": "WebPage",
+	name: title,
+	description: description,
+	breadcrumb: {
+		"@type": "BreadcrumbList",
+		itemListElement: [
+			{ "@type": "ListItem", position: 1, name: "Home", item: "https://www.urbanhazardmaps.com" },
+			{ "@type": "ListItem", position: 2, name: "Methodology", item: "https://www.urbanhazardmaps.com/methodology" },
+		],
+	},
+}}>
 	<Header generated={stats.generated} />
 
 	<main class="container" style="padding-top: 32px; padding-bottom: 48px;">

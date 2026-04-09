@@ -8,6 +8,7 @@ export default defineConfig({
   trailingSlash: "never",
   integrations: [react()],
   site: "https://www.urbanhazardmaps.com",
+  trailingSlash: "never",
   server: {
     host: "0.0.0.0",
     port: 4321,

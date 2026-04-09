@@ -46,7 +46,16 @@ const title = `Boston Urban Hazard Maps — ${formatNumber(stats.total + encampm
 const description = `Interactive heatmap and analysis of ${formatNumber(stats.total)} sharps and ${formatNumber(encampmentStats.total)} encampment reports from Boston's 311 system across ${stats.hoods.length} neighborhoods. Data from ${stats.years[0]}–${stats.years[stats.years.length - 1]}.`
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} jsonLd={{
+	"@context": "https://schema.org",
+	"@type": "Dataset",
+	name: "Boston Urban Hazard Maps",
+	description: "Interactive analysis of sharps collection and encampment requests reported through Boston's 311 system. Derived from open municipal data.",
+	url: "https://www.urbanhazardmaps.com",
+	license: "https://opensource.org/licenses/MIT",
+	creator: { "@type": "Organization", name: "Urban Hazards" },
+	distribution: { "@type": "DataDownload", encodingFormat: "application/json", contentUrl: "https://www.urbanhazardmaps.com/api/stats" },
+}}>
 	<Header generated={stats.generated} />
 
 	<main class="container" style="padding-top: 32px; padding-bottom: 48px;">

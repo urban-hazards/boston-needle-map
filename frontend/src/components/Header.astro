@@ -12,6 +12,9 @@ const { generated } = Astro.props
 			<a href="/" class="header-title">Boston Urban Hazard Maps</a>
 			<span class="header-sub">311 sharps &amp; encampment data</span>
 		</div>
+		<nav class="header-nav">
+			<a href="/methodology" class="nav-link">Methodology</a>
+		</nav>
 		<div class="header-right">
 			<span class="header-meta">
 				Data: <a
@@ -78,6 +81,24 @@ const { generated } = Astro.props
 		font-size: 13px;
 		color: var(--color-text-muted);
 		white-space: nowrap;
+	}
+
+	.header-nav {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+	}
+
+	.nav-link {
+		font-size: 14px;
+		color: var(--color-text-muted);
+		text-decoration: none;
+		font-weight: 600;
+	}
+
+	.nav-link:hover {
+		color: var(--color-accent);
+		text-decoration: none;
 	}
 
 	.header-right {
