@@ -429,6 +429,76 @@ const description =
 			</div>
 		</section>
 
+		<section class="section" aria-label="Invisible tickets">
+			<h2 class="section-title">142,000 Invisible Tickets</h2>
+			<div class="card prose">
+				<p>
+					Boston publishes its 311 data in two ways: a <strong>bulk CSV download</strong>
+					on <a href="https://data.boston.gov/dataset/311-service-requests" target="_blank"
+					rel="noopener">data.boston.gov</a>, and a real-time
+					<a href="https://boston2-production.spotmobile.net/open311/docs" target="_blank"
+					rel="noopener">Open311 API</a>. Most researchers, journalists, and the city's
+					own dashboards use the bulk download &mdash; it's faster, easier, and covers
+					standard categories like potholes, graffiti, and street cleaning.
+				</p>
+				<p>
+					But the bulk data is missing an entire category. When a resident opens the
+					BOS:311 app and taps <strong>"Other"</strong> &mdash; because none of the 16
+					visible categories fit their problem &mdash; the ticket is filed as a
+					"General Request." These tickets <strong>do not appear in the bulk CSV at
+					all</strong>. They exist only in the Open311 API, which is rate-limited to
+					10 requests per minute and returns 100 results per page. Retrieving them
+					requires day-by-day scraping over months of data &mdash; a process that
+					takes specialized tools and hours of compute time.
+				</p>
+				<p>
+					We built a scraper and pulled all of them. The result:
+					<strong>142,946 tickets</strong> filed between January 2023 and April 2026
+					that are completely invisible in the city's public bulk data. Among them:
+				</p>
+				<ul>
+					<li><strong>2,400+ human waste reports</strong> &mdash; 60% still open,
+						median age 624 days</li>
+					<li><strong>9,200+ encampment reports</strong> &mdash; 26% still open</li>
+					<li><strong>13,499 tickets</strong> that were never reclassified by staff
+						and sit in a permanent black hole &mdash; open, unread, unresolved</li>
+					<li><strong>47,567 tickets</strong> (33% of total) still marked "open"</li>
+				</ul>
+				<p>
+					The median time to close a ticket filed under "Other"?
+					<strong>428 days</strong> &mdash; over a year.
+				</p>
+			</div>
+			<div class="card prose" style="margin-top: 16px;">
+				<h3 style="font-size: var(--fs-md); margin-bottom: 8px; color: var(--color-text);">
+					Why This Is a Data Architecture Problem
+				</h3>
+				<p>
+					This isn't a transparency issue &mdash; the data technically exists. It's an
+					<strong>architecture problem</strong>. The city's open data portal (CKAN)
+					only indexes tickets filed under standard service types. The "Other" category
+					falls outside that index. So anyone using the bulk data &mdash; researchers,
+					journalists, the city's own performance dashboards &mdash; is working with
+					an incomplete picture.
+				</p>
+				<p>
+					The Open311 API has the data, but it's designed for app integrations, not
+					bulk analysis. Its rate limit (10 requests/minute) means pulling a full
+					historical dataset requires hours of patient scraping with retry logic. A
+					journalist on deadline or a council staffer running numbers before a hearing
+					will never find these tickets. Only someone who knows the API exists, knows
+					the rate limits, and has the tools to work around them can extract this data.
+				</p>
+				<p>
+					<strong>The fix is simple:</strong> include "General Request" tickets in the
+					bulk CSV export on data.boston.gov. This is a configuration change in the
+					CKAN data pipeline &mdash; the records already exist in the city's CRM.
+					Until that happens, 142,000 constituent reports remain invisible to
+					everyone except the city's internal staff.
+				</p>
+			</div>
+		</section>
+
 		<section class="section" aria-label="Who to contact">
 			<h2 class="section-title">Who Needs to Act</h2>
 			<div class="contact-grid">
