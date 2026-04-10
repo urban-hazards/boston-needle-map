@@ -499,6 +499,122 @@ const description =
 			</div>
 		</section>
 
+		<section class="section" aria-label="Stripped evidence">
+			<h2 class="section-title">The Public Data Is Missing the Evidence</h2>
+			<div class="card prose">
+				<p>
+					The data transparency problem goes beyond invisible tickets. We compared
+					the city's public bulk data (data.boston.gov) against the same tickets in
+					the real-time API, record by record, across five ticket types and 420
+					matched tickets. <strong>The bulk data systematically strips out the
+					citizen's own words and photos from every ticket.</strong>
+				</p>
+			</div>
+			<div class="card" style="margin-top: 16px; overflow-x: auto;">
+				<table style="width: 100%; font-size: var(--fs-sm); border-collapse: collapse;">
+					<thead>
+						<tr style="border-bottom: 2px solid var(--color-border);">
+							<th style="text-align: left; padding: 8px;">Ticket Type</th>
+							<th style="text-align: left; padding: 8px;">Matched</th>
+							<th style="text-align: left; padding: 8px;">Descriptions in API</th>
+							<th style="text-align: left; padding: 8px;">Descriptions in CKAN</th>
+							<th style="text-align: left; padding: 8px;">Photos in API</th>
+							<th style="text-align: left; padding: 8px;">Photos in CKAN</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr style="border-bottom: 1px solid var(--color-border);">
+							<td style="padding: 8px;">Needle Cleanup</td>
+							<td style="padding: 8px;">52</td>
+							<td style="padding: 8px;"><strong>94.2%</strong></td>
+							<td style="padding: 8px; color: var(--color-accent);"><strong>0%</strong></td>
+							<td style="padding: 8px;"><strong>84.6%</strong></td>
+							<td style="padding: 8px; color: var(--color-accent);"><strong>0%</strong></td>
+						</tr>
+						<tr style="border-bottom: 1px solid var(--color-border);">
+							<td style="padding: 8px;">Encampments</td>
+							<td style="padding: 8px;">14</td>
+							<td style="padding: 8px;"><strong>85.7%</strong></td>
+							<td style="padding: 8px; color: var(--color-accent);"><strong>0%</strong></td>
+							<td style="padding: 8px;"><strong>42.9%</strong></td>
+							<td style="padding: 8px; color: var(--color-accent);"><strong>0%</strong></td>
+						</tr>
+						<tr style="border-bottom: 1px solid var(--color-border);">
+							<td style="padding: 8px;">Pothole Repair</td>
+							<td style="padding: 8px;">255</td>
+							<td style="padding: 8px;"><strong>81.2%</strong></td>
+							<td style="padding: 8px; color: var(--color-accent);"><strong>0%</strong></td>
+							<td style="padding: 8px;"><strong>81.6%</strong></td>
+							<td style="padding: 8px; color: var(--color-accent);"><strong>0%</strong></td>
+						</tr>
+						<tr style="border-bottom: 1px solid var(--color-border);">
+							<td style="padding: 8px;">Dead Animal Pickup</td>
+							<td style="padding: 8px;">39</td>
+							<td style="padding: 8px;"><strong>100%</strong></td>
+							<td style="padding: 8px; color: var(--color-accent);"><strong>0%</strong></td>
+							<td style="padding: 8px;"><strong>35.9%</strong></td>
+							<td style="padding: 8px; color: var(--color-accent);"><strong>0%</strong></td>
+						</tr>
+						<tr>
+							<td style="padding: 8px;">Sidewalk Repair</td>
+							<td style="padding: 8px;">60</td>
+							<td style="padding: 8px;"><strong>96.7%</strong></td>
+							<td style="padding: 8px; color: var(--color-accent);"><strong>0%</strong></td>
+							<td style="padding: 8px;"><strong>81.7%</strong></td>
+							<td style="padding: 8px; color: var(--color-accent);"><strong>0%</strong></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			<div class="card prose" style="margin-top: 16px;">
+				<p>
+					<strong>Zero percent.</strong> Across 420 matched tickets and five different
+					categories, not a single citizen description or photo made it into the
+					public data download. The <code>submitted_photo</code> column exists in the
+					CSV but is universally empty. The description field does not exist at all.
+				</p>
+				<p>
+					These aren't obscure metadata fields. When a resident reports
+					"Sidewalk is badly broken &mdash; people are tripping and falling" and
+					attaches a photo, that's the core evidence of the complaint. The public data
+					reduces it to a ticket number, a category, and a close date. You can count
+					the tickets, but you can't read them.
+				</p>
+				<h3 style="font-size: var(--fs-md); margin-bottom: 8px; color: var(--color-text);">
+					What This Means for Accountability
+				</h3>
+				<p>
+					Without descriptions, no one outside city hall can verify whether a "closed"
+					ticket was actually resolved. A needle report closed as
+					"Case Closed. Resolved" &mdash; did someone pick up the needles, or did the
+					ticket just expire? The API has the staff's status notes. The public data
+					has a truncated <code>closure_reason</code> that often says nothing useful.
+				</p>
+				<p>
+					Without photos, the severity of the problem is invisible. A pothole report
+					with a photo of a car-swallowing crater looks different from one about a
+					hairline crack. In the public data, they're both just "Request for Pothole
+					Repair: Closed."
+				</p>
+				<h3 style="font-size: var(--fs-md); margin-bottom: 8px; color: var(--color-text);">
+					How to Reproduce These Results
+				</h3>
+				<p>
+					Our comparison tool and full methodology are
+					<a href="https://github.com/urban-hazards/urban-hazard-maps/tree/main/services/open311-scraper"
+						target="_blank" rel="noopener">open source</a>. To verify:
+					pull any ticket from the
+					<a href="https://boston2-production.spotmobile.net/open311/docs"
+						target="_blank" rel="noopener">Open311 API</a>
+					by its <code>service_request_id</code>, then look for the same
+					<code>case_enquiry_id</code> in the
+					<a href="https://data.boston.gov/dataset/311-service-requests"
+						target="_blank" rel="noopener">CKAN bulk download</a>.
+					The description and photo will be missing from CKAN every time.
+				</p>
+			</div>
+		</section>
+
 		<section class="section" aria-label="Who to contact">
 			<h2 class="section-title">Who Needs to Act</h2>
 			<div class="contact-grid">
