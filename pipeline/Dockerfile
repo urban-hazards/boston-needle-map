@@ -4,7 +4,8 @@ COPY pipeline/pyproject.toml pipeline/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY pipeline/src/ src/
 RUN uv sync --frozen --no-dev
-RUN uv run python -m spacy download en_core_web_sm
+# en_core_web_sm is declared as a direct URL dep in pyproject.toml, so
+# `uv sync` above installs it. No separate `spacy download` step needed.
 
 FROM python:3.12-slim-bookworm
 RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 --no-create-home appuser
