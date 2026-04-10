@@ -90,6 +90,29 @@ jobs:
       - name: Check
         run: pnpm check
 
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build (no S3 — uses empty fallback data)
+        run: pnpm build
+
   secret-scanning:
     name: Scan for secrets
     runs-on: ubuntu-latest
@@ -131,7 +154,7 @@ jobs:
     name: All Checks Pass
     runs-on: ubuntu-latest
     if: always()
-    needs: [pipeline-ruff-lint, pipeline-ruff-format, pipeline-mypy, pipeline-test, frontend-check, secret-scanning]
+    needs: [pipeline-ruff-lint, pipeline-ruff-format, pipeline-mypy, pipeline-test, frontend-check, frontend-build, secret-scanning]
     steps:
       - name: Verify all checks passed
         run: |
@@ -140,6 +163,7 @@ jobs:
                 "${{ needs.pipeline-mypy.result }}" != "success" ||
                 "${{ needs.pipeline-test.result }}" != "success" ||
                 "${{ needs.frontend-check.result }}" != "success" ||
+                "${{ needs.frontend-build.result }}" != "success" ||
                 "${{ needs.secret-scanning.result }}" != "success" ]]; then
             echo "One or more checks failed."
             exit 1
