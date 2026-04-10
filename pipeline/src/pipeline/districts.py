@@ -128,7 +128,10 @@ def _load_or_fetch_boundaries() -> dict[str, Any]:
             else:
                 result[key] = {"features": []}
 
-    storage.write_json(CACHE_KEY, result)
+    try:
+        storage.write_json(CACHE_KEY, result)
+    except Exception:
+        logger.debug("Could not cache boundaries to S3 (local dev?)")
     return result
 
 
@@ -211,8 +214,11 @@ class DistrictLookup:
     def save_cache(self) -> None:
         """Write the assignment cache to S3 if it changed."""
         if self._dirty:
-            storage.write_json(ASSIGNMENTS_KEY, self._assignments)
-            logger.info("Saved %d district assignments to cache", len(self._assignments))
+            try:
+                storage.write_json(ASSIGNMENTS_KEY, self._assignments)
+                logger.info("Saved %d district assignments to cache", len(self._assignments))
+            except Exception:
+                logger.debug("Could not save assignment cache to S3 (local dev?)")
             self._dirty = False
 
     def label(self, layer: str, dist_id: str) -> str:
