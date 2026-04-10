@@ -101,6 +101,14 @@ const description = `Interactive heatmap and analysis of ${formatNumber(stats.to
 			total={stats.total}
 			encampmentTotal={encampmentStats.total}
 			wasteTotal={wasteStats.total}
+			councilDistricts={stats.council_districts ?? []}
+			councilLabels={stats.council_district_labels ?? stats.council_districts ?? []}
+			policeDistricts={stats.police_districts ?? []}
+			policeLabels={stats.police_district_labels ?? stats.police_districts ?? []}
+			stateRepDistricts={stats.state_rep_districts ?? []}
+			stateRepLabels={stats.state_rep_district_labels ?? stats.state_rep_districts ?? []}
+			stateSenateDistricts={stats.state_senate_districts ?? []}
+			stateSenateLabels={stats.state_senate_district_labels ?? stats.state_senate_districts ?? []}
 		/>
 
 		<section class="section" aria-label="Trend charts">

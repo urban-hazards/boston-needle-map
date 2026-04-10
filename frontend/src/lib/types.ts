@@ -19,6 +19,10 @@ export interface MarkerData {
 	hood: string
 	street: string
 	zip: string
+	council_district?: string
+	police_district?: string
+	state_rep_district?: string
+	state_senate_district?: string
 	source?: "confirmed" | "detected" | null
 }
 
@@ -42,6 +46,14 @@ export interface PageStats {
 	year_hourly: Record<string, number[]>
 	year_monthly: Record<string, number[]>
 	zip_stats: ZipStat[]
+	council_districts?: string[]
+	council_district_labels?: string[]
+	police_districts?: string[]
+	police_district_labels?: string[]
+	state_rep_districts?: string[]
+	state_rep_district_labels?: string[]
+	state_senate_districts?: string[]
+	state_senate_district_labels?: string[]
 	generated: string
 	peak_hood: string
 	peak_hour: number
@@ -62,6 +74,10 @@ export interface DashboardStats {
 	year_monthly: Record<string, number[]>
 	zip_stats: ZipStat[]
 	markers: MarkerData[]
+	council_districts?: string[]
+	police_districts?: string[]
+	state_rep_districts?: string[]
+	state_senate_districts?: string[]
 	generated: string
 	peak_hood: string
 	peak_hour: number

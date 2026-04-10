@@ -17,6 +17,7 @@ from pipeline.config import (
     SCRAPER_SLUGS_FOR_WASTE,
     STREET_CLEANING_TYPES,
 )
+from pipeline.districts import DistrictLookup
 from pipeline.enricher import enrich_records
 from pipeline.fetcher import fetch_encampment_year, fetch_year
 from pipeline.models import CleanedRecord
@@ -33,6 +34,47 @@ DATASET_CONFIG: dict[str, tuple[set[str], int]] = {
 }
 
 ALL_DATASETS = list(DATASET_CONFIG.keys())
+
+# Lazily initialized district lookup (shared across datasets in a single run)
+_district_lookup: DistrictLookup | None = None
+
+
+def _get_district_lookup() -> DistrictLookup:
+    """Get or create the shared district lookup instance."""
+    global _district_lookup  # noqa: PLW0603
+    if _district_lookup is None:
+        _district_lookup = DistrictLookup()
+    return _district_lookup
+
+
+def _district_labels(layer: str, district_ids: list[str]) -> list[str]:
+    """Convert raw district IDs to display labels with elected names."""
+    lookup = _get_district_lookup()
+    return [lookup.label(layer, d) for d in district_ids]
+
+
+def _enrich_districts(records: list[CleanedRecord]) -> None:
+    """Enrich cleaned records with political district assignments in-place.
+
+    All four district types use GIS point-in-polygon against official
+    boundary data — CKAN text fields are ignored as they have ~10%
+    error rate on boundary-edge cases.
+    """
+    lookup = _get_district_lookup()
+    enriched = 0
+
+    for rec in records:
+        districts = lookup.lookup(rec.lat, rec.lng)
+        rec.council_district = districts.get("council", "")
+        rec.police_district = districts.get("police", "")
+        rec.state_rep_district = districts.get("state_rep", "")
+        rec.state_senate_district = districts.get("state_senate", "")
+
+        if rec.council_district:
+            enriched += 1
+
+    lookup.save_cache()
+    logger.info("Enriched %d / %d records with district data", enriched, len(records))
 
 
 def _fetch_dataset_years(
@@ -96,6 +138,9 @@ def _process_dataset(dataset: str, raw_records: list[dict[str, Any]]) -> int:
         logger.warning("No valid records for %s, skipping stats", dataset)
         return 0
 
+    # Enrich with political district data
+    _enrich_districts(cleaned)
+
     # Compute dashboard stats
     stats = compute_stats(cleaned)
 
@@ -114,6 +159,14 @@ def _process_dataset(dataset: str, raw_records: list[dict[str, Any]]) -> int:
         "peak_dow": stats.peak_dow,
         "avg_monthly": stats.avg_monthly,
         "initial_heat": stats.heat_keys.get("all", []),
+        "council_districts": stats.council_districts,
+        "council_district_labels": _district_labels("council", stats.council_districts),
+        "police_districts": stats.police_districts,
+        "police_district_labels": _district_labels("police", stats.police_districts),
+        "state_rep_districts": stats.state_rep_districts,
+        "state_rep_district_labels": _district_labels("state_rep", stats.state_rep_districts),
+        "state_senate_districts": stats.state_senate_districts,
+        "state_senate_district_labels": _district_labels("state_senate", stats.state_senate_districts),
     }
 
     # Write output files
@@ -284,6 +337,9 @@ def _process_waste(raw_records: list[dict[str, Any]], force: bool) -> int:
         logger.warning("No valid waste records after cleaning")
         return 0
 
+    # Enrich with political district data
+    _enrich_districts(cleaned)
+
     # Compute stats and write
     stats = compute_stats(cleaned)
 
@@ -302,6 +358,14 @@ def _process_waste(raw_records: list[dict[str, Any]], force: bool) -> int:
         "avg_monthly": stats.avg_monthly,
         "initial_heat": stats.heat_keys.get("all", []),
         "routing_stats": routing_stats,
+        "council_districts": stats.council_districts,
+        "council_district_labels": _district_labels("council", stats.council_districts),
+        "police_districts": stats.police_districts,
+        "police_district_labels": _district_labels("police", stats.police_districts),
+        "state_rep_districts": stats.state_rep_districts,
+        "state_rep_district_labels": _district_labels("state_rep", stats.state_rep_districts),
+        "state_senate_districts": stats.state_senate_districts,
+        "state_senate_district_labels": _district_labels("state_senate", stats.state_senate_districts),
     }
 
     storage.write_json("waste/stats.json", page_stats)
