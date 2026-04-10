@@ -1,10 +1,16 @@
 """Fetch all 'Other' (General Request) tickets from Boston Open311 API.
 
-Day-by-day batching to work around the 100-result-per-query cap.
+Day-by-day batching to work around the 100-result-per-page cap.
 Stores each day as a JSON object in S3 so you can stop and resume.
 
 On first run, backfills from START_DATE to today.
 On subsequent runs, only fetches days not already in S3.
+
+API constraints (from https://boston2-production.spotmobile.net/open311/docs):
+  - 10 requests per minute (unauthenticated)
+  - 100 results per page max
+  - 429 response includes Retry-After header
+  - 90-day max date range (we use single days, so N/A)
 
 Usage (local testing with env vars):
     BUCKET=... ACCESS_KEY_ID=... SECRET_ACCESS_KEY=... ENDPOINT=... python fetch.py
@@ -42,13 +48,11 @@ SERVICE_CODE = "Mayor's 24 Hour Hotline:General Request:General Request"
 START_DATE = "2023-01-01"
 UA = "BostonHazardResearch/1.0 (public-health-research)"
 
-# --- Rate limiting ---
+# --- Rate limiting (API allows 10 req/min = 1 every 6s) ---
 
-DELAY = 1.0
-MIN_DELAY = 0.8
-MAX_DELAY = 120
-BACKOFF_FACTOR = 2.5
-COOLDOWN_FACTOR = 0.95
+DELAY = 7.0          # stay safely under 10 req/min
+MAX_DELAY = 120       # max backoff on repeated 429s
+MAX_RETRIES = 5       # retries per request before skipping a day
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger(__name__)
@@ -75,7 +79,6 @@ def list_existing_days(s3) -> set[str]:
         paginator = s3.get_paginator("list_objects_v2")
         for page in paginator.paginate(Bucket=BUCKET, Prefix=S3_PREFIX):
             for obj in page.get("Contents", []):
-                # key like "open311/raw/2023-01-15.json" -> "2023-01-15"
                 key = obj["Key"]
                 day_str = key.removeprefix(S3_PREFIX).removesuffix(".json")
                 if len(day_str) == 10:  # YYYY-MM-DD
@@ -86,7 +89,7 @@ def list_existing_days(s3) -> set[str]:
 
 
 def save_day(s3, day: date, records: list[dict]) -> None:
-    """Write a day's records to S3."""
+    """Write a day's records to S3 with record count in metadata for verification."""
     key = f"{S3_PREFIX}{day}.json"
     body = json.dumps(records, separators=(",", ":"))
     s3.put_object(
@@ -94,6 +97,7 @@ def save_day(s3, day: date, records: list[dict]) -> None:
         Key=key,
         Body=body.encode("utf-8"),
         ContentType="application/json",
+        Metadata={"record-count": str(len(records))},
     )
 
 
@@ -109,63 +113,72 @@ def update_manifest(s3, stats: dict) -> None:
     )
 
 
-def fetch_day(day: date, current_delay: float) -> tuple[list[dict], float]:
-    """Fetch all 'Other' tickets for a single day. Handles pagination and rate limits."""
+def _do_request(url: str) -> tuple[list[dict] | None, int | None]:
+    """Make a single HTTP request. Returns (data, retry_after_seconds).
+
+    On success: (data, None)
+    On 429: (None, retry_seconds from Retry-After header or default 60)
+    On other error: raises
+    """
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read()), None
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            retry_after = e.headers.get("Retry-After")
+            wait = int(retry_after) if retry_after and retry_after.isdigit() else 60
+            return None, wait
+        raise
+
+
+def fetch_day(day: date, delay: float) -> tuple[list[dict], float]:
+    """Fetch all 'Other' tickets for a single day with pagination and rate limit handling.
+
+    Returns (records, current_delay). If a day is skipped due to rate limits,
+    returns empty list — the day won't be saved to S3 so it'll be retried next run.
+    """
     all_records = []
     page = 1
-    delay = current_delay
 
     while True:
-        start = f"{day}T00:00:00Z"
-        end = f"{day}T23:59:59Z"
         params = urllib.parse.urlencode({
-            "start_date": start,
-            "end_date": end,
+            "start_date": f"{day}T00:00:00Z",
+            "end_date": f"{day}T23:59:59Z",
             "service_code": SERVICE_CODE,
-            "page_size": 500,
+            "per_page": 100,  # API max is 100
             "page": page,
         })
         url = f"{OPEN311_BASE}/requests.json?{params}"
-        req = urllib.request.Request(url, headers={"User-Agent": UA})
 
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                data = json.loads(resp.read())
-        except urllib.error.HTTPError as e:
-            if e.code == 429:
-                for attempt in range(5):
-                    delay = min(delay * BACKOFF_FACTOR, MAX_DELAY)
-                    wait = delay * (attempt + 1)
-                    log.info("  RATE LIMITED on %s (attempt %d/5), waiting %.0fs", day, attempt + 1, wait)
-                    time.sleep(wait)
-                    try:
-                        with urllib.request.urlopen(req, timeout=30) as resp:
-                            data = json.loads(resp.read())
-                        # Recovered — keep delay high for a while to be polite
-                        delay = max(delay, 3.0)
-                        break
-                    except urllib.error.HTTPError as retry_e:
-                        if retry_e.code != 429:
-                            log.error("  ERROR %s page %d: %s", day, page, retry_e)
-                            return all_records or [], delay
-                    except Exception:
-                        pass
-                else:
-                    log.warning("  STILL LIMITED on %s after 5 retries, skipping (will retry next run)", day)
-                    return [], delay
-            else:
+        # Try the request with retries on 429
+        data = None
+        for attempt in range(MAX_RETRIES):
+            try:
+                data, retry_after = _do_request(url)
+            except Exception as e:
                 log.error("  ERROR %s page %d: %s", day, page, e)
-                break
-        except Exception as e:
-            log.error("  ERROR %s page %d: %s", day, page, e)
-            break
+                return all_records, delay
+
+            if data is not None:
+                break  # success
+
+            # Rate limited — use Retry-After header
+            wait = min(retry_after or 60, MAX_DELAY)
+            log.info("  RATE LIMITED on %s page %d (attempt %d/%d), Retry-After: %ds",
+                     day, page, attempt + 1, MAX_RETRIES, wait)
+            time.sleep(wait)
+        else:
+            # All retries exhausted
+            log.warning("  GIVING UP on %s after %d retries (will retry next run)", day, MAX_RETRIES)
+            return [], delay  # empty = won't be saved to S3
 
         if not data:
             break
 
-        delay = max(delay * COOLDOWN_FACTOR, MIN_DELAY)
         all_records.extend(data)
 
+        # Paginate if we got a full page (exactly 100 = there may be more)
         if len(data) >= 100:
             page += 1
             time.sleep(delay)
@@ -175,12 +188,26 @@ def fetch_day(day: date, current_delay: float) -> tuple[list[dict], float]:
     return all_records, delay
 
 
+def verify_day(s3, day: date, expected_count: int) -> bool:
+    """Verify a saved day file has the right record count."""
+    key = f"{S3_PREFIX}{day}.json"
+    try:
+        resp = s3.head_object(Bucket=BUCKET, Key=key)
+        stored_count = resp.get("Metadata", {}).get("record-count")
+        if stored_count and int(stored_count) != expected_count:
+            log.warning("  MISMATCH %s: expected %d, S3 metadata says %s", day, expected_count, stored_count)
+            return False
+        return True
+    except Exception:
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch Open311 'Other' tickets to S3")
     parser.add_argument("--start", default=START_DATE, help="Start date (YYYY-MM-DD)")
     parser.add_argument("--end", default=None, help="End date (default: yesterday)")
     parser.add_argument("--dry-run", action="store_true", help="Show plan without fetching")
-    parser.add_argument("--delay", type=float, default=DELAY, help="Initial delay between requests")
+    parser.add_argument("--delay", type=float, default=DELAY, help="Delay between requests in seconds")
     args = parser.parse_args()
 
     if not BUCKET:
@@ -190,7 +217,6 @@ def main():
     s3 = get_s3_client()
 
     start = date.fromisoformat(args.start)
-    # Default to yesterday so we don't fetch a partial day
     end = date.fromisoformat(args.end) if args.end else date.today() - timedelta(days=1)
 
     # Check what's already in S3
@@ -208,9 +234,10 @@ def main():
     days_needed.reverse()
 
     total_days = (end - start).days + 1
+    est_minutes = len(days_needed) * args.delay / 60
     log.info("Date range: %s to %s (%d days)", start, end, total_days)
     log.info("Already in S3: %d days", len(existing))
-    log.info("Need to fetch: %d days", len(days_needed))
+    log.info("Need to fetch: %d days (est. %.0f min at %.0fs/req)", len(days_needed), est_minutes, args.delay)
 
     if args.dry_run or not days_needed:
         if not days_needed:
@@ -218,33 +245,50 @@ def main():
         return
 
     total_records = 0
-    current_delay = args.delay
+    skipped = 0
+    delay = args.delay
 
     for i, day in enumerate(days_needed):
-        records, current_delay = fetch_day(day, current_delay)
+        records, delay = fetch_day(day, delay)
 
         if records:
             save_day(s3, day, records)
-            total_records += len(records)
-            log.info("  %s: %d tickets (total: %d, delay: %.1fs)", day, len(records), total_records, current_delay)
+            if not verify_day(s3, day, len(records)):
+                log.warning("  Verification failed for %s, will retry next run", day)
+                # Delete the bad file so next run retries
+                s3.delete_object(Bucket=BUCKET, Key=f"{S3_PREFIX}{day}.json")
+                skipped += 1
+            else:
+                total_records += len(records)
+                log.info("  %s: %d tickets (total: %d, %d/%d done)",
+                         day, len(records), total_records, i + 1, len(days_needed))
+        else:
+            skipped += 1
 
-        if i > 0 and i % 50 == 0 and not records:
-            log.info("  ... %s (%d/%d days done)", day, i, len(days_needed))
+        # Progress every 100 days
+        if i > 0 and i % 100 == 0:
+            log.info("  PROGRESS: %d/%d days done, %d records, %d skipped",
+                     i, len(days_needed), total_records, skipped)
 
-        time.sleep(current_delay)
+        time.sleep(delay)
 
-    # Write manifest so the pipeline knows what data is available
-    all_days = existing | {str(d) for d in days_needed if True}
+    # Write manifest
+    all_days_in_s3 = list_existing_days(s3)
     manifest = {
         "last_run": datetime.utcnow().isoformat() + "Z",
-        "total_days": len(all_days),
+        "total_days_in_s3": len(all_days_in_s3),
         "date_range": {"start": str(start), "end": str(end)},
-        "records_fetched_this_run": total_records,
-        "days_fetched_this_run": len(days_needed),
+        "this_run": {
+            "records_fetched": total_records,
+            "days_attempted": len(days_needed),
+            "days_skipped": skipped,
+        },
     }
     update_manifest(s3, manifest)
 
-    log.info("Done. %d records fetched across %d days.", total_records, len(days_needed))
+    log.info("Done. %d records fetched, %d days skipped (will retry next run).", total_records, skipped)
+    if skipped:
+        log.info("Skipped days will be retried on the next run automatically.")
 
 
 if __name__ == "__main__":
