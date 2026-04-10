@@ -1,10 +1,16 @@
-"""Fetch all 'Other' (General Request) tickets from Boston Open311 API.
+"""Fetch all Boston Open311 tickets and store raw JSON in S3.
 
-Day-by-day batching to work around the 100-result-per-page cap.
-Stores each day as a JSON object in S3 so you can stop and resume.
+Pulls ALL 16 service types exposed by the BOS:311 app. Each type gets its
+own S3 prefix (open311/{slug}/YYYY-MM-DD.json) so data is organized and
+independently resumable.
 
-On first run, backfills from START_DATE to today.
-On subsequent runs, only fetches days not already in S3.
+Why we pull from the API when CKAN bulk data exists:
+  1. "Other" (General Request) tickets are MISSING from CKAN entirely — 142k+ invisible tickets
+  2. CKAN strips citizen descriptions from ALL types — the free-text field is gone
+  3. CKAN strips ALL photos — the submitted_photo column is universally empty
+  4. CKAN strips staff status notes — only a truncated closure_reason survives
+
+The API is the only source of the actual human-written reports and photo evidence.
 
 API constraints (from https://boston2-production.spotmobile.net/open311/docs):
   - 10 requests per minute (unauthenticated)
@@ -12,11 +18,12 @@ API constraints (from https://boston2-production.spotmobile.net/open311/docs):
   - 429 response includes Retry-After header
   - 90-day max date range (we use single days, so N/A)
 
-Usage (local testing with env vars):
-    BUCKET=... ACCESS_KEY_ID=... SECRET_ACCESS_KEY=... ENDPOINT=... python fetch.py
-
-    python fetch.py --start 2025-01-01   # fetch from a specific date
-    python fetch.py --dry-run            # show what would be fetched
+Usage:
+    python fetch.py                        # fetch all types, all days
+    python fetch.py --type other           # fetch only "Other" tickets
+    python fetch.py --type needles         # fetch only needle tickets
+    python fetch.py --start 2025-01-01     # fetch from a specific date
+    python fetch.py --dry-run              # show plan without fetching
 """
 
 import argparse
@@ -39,20 +46,86 @@ S3_SECRET_KEY = os.environ.get("SECRET_ACCESS_KEY", "")
 S3_ENDPOINT = os.environ.get("ENDPOINT", "")
 S3_REGION = os.environ.get("REGION", "us-east-1")
 
-S3_PREFIX = "open311/raw/"  # all raw day files go under this prefix
-
 # --- Open311 API ---
 
 OPEN311_BASE = "https://boston2-production.spotmobile.net/open311/v2"
-SERVICE_CODE = "Mayor's 24 Hour Hotline:General Request:General Request"
 START_DATE = "2023-01-01"
 UA = "BostonHazardResearch/1.0 (public-health-research)"
 
+# All 16 service types exposed by the BOS:311 app.
+# slug -> (service_code, human_name)
+SERVICE_TYPES: dict[str, tuple[str, str]] = {
+    "other": (
+        "Mayor's 24 Hour Hotline:General Request:General Request",
+        "Other (General Request)",
+    ),
+    "needles": (
+        "Mayor's 24 Hour Hotline:Needle Program:Needle Pickup",
+        "Needle Cleanup",
+    ),
+    "encampments": (
+        "Mayor's 24 Hour Hotline:Quality of Life:Encampments",
+        "Encampments",
+    ),
+    "potholes": (
+        "Public Works Department:Highway Maintenance:Request for Pothole Repair",
+        "Pothole Repair",
+    ),
+    "sidewalks": (
+        "Public Works Department:Highway Maintenance:Sidewalk Repair (Make Safe)",
+        "Broken Sidewalk",
+    ),
+    "dead-animals": (
+        "Public Works Department:Street Cleaning:Pick up Dead Animal",
+        "Dead Animal Pickup",
+    ),
+    "graffiti": (
+        "input.Illegal Graffiti",
+        "Illegal Graffiti",
+    ),
+    "litter": (
+        "input.Litter",
+        "Litter",
+    ),
+    "rodents": (
+        "input.Rodent Sighting",
+        "Rodent Sighting",
+    ),
+    "trash-cans": (
+        "input.Overflowing Trash Can",
+        "Overflowing Trash Can",
+    ),
+    "abandoned-vehicles": (
+        "Transportation - Traffic Division:Enforcement & Abandoned Vehicles:Abandoned Vehicles",
+        "Abandoned Vehicle",
+    ),
+    "parking": (
+        "Transportation - Traffic Division:Enforcement & Abandoned Vehicles:Parking Enforcement",
+        "Illegal Parking",
+    ),
+    "traffic-signals": (
+        "Transportation - Traffic Division:Signs & Signals:Traffic Signal Inspection",
+        "Traffic Signal",
+    ),
+    "signs": (
+        "Transportation - Traffic Division:Signs & Signals:Sign Repair",
+        "Damaged Sign",
+    ),
+    "abandoned-bikes": (
+        "Mayor's 24 Hour Hotline:Abandoned Bicycle:Abandoned Bicycle",
+        "Abandoned Bicycle",
+    ),
+    "illegal-trash": (
+        "Public Works Department:Code Enforcement:Improper Storage of Trash (Barrels)",
+        "Residential Trash out Illegally",
+    ),
+}
+
 # --- Rate limiting (API allows 10 req/min = 1 every 6s) ---
 
-DELAY = 7.0          # stay safely under 10 req/min
-MAX_DELAY = 120       # max backoff on repeated 429s
-MAX_RETRIES = 5       # retries per request before skipping a day
+DELAY = 7.0
+MAX_DELAY = 120
+MAX_RETRIES = 5
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger(__name__)
@@ -72,25 +145,25 @@ def get_s3_client():
     return boto3.client(**kwargs)
 
 
-def list_existing_days(s3) -> set[str]:
-    """List day files already in S3 to know what to skip."""
+def list_existing_days(s3, prefix: str) -> set[str]:
+    """List day files already in S3 under a given prefix."""
     existing = set()
     try:
         paginator = s3.get_paginator("list_objects_v2")
-        for page in paginator.paginate(Bucket=BUCKET, Prefix=S3_PREFIX):
+        for page in paginator.paginate(Bucket=BUCKET, Prefix=prefix):
             for obj in page.get("Contents", []):
                 key = obj["Key"]
-                day_str = key.removeprefix(S3_PREFIX).removesuffix(".json")
-                if len(day_str) == 10:  # YYYY-MM-DD
+                day_str = key.removeprefix(prefix).removesuffix(".json")
+                if len(day_str) == 10:
                     existing.add(day_str)
     except Exception as e:
-        log.warning("Could not list existing S3 keys: %s", e)
+        log.warning("Could not list S3 keys at %s: %s", prefix, e)
     return existing
 
 
-def save_day(s3, day: date, records: list[dict]) -> None:
-    """Write a day's records to S3 with record count in metadata for verification."""
-    key = f"{S3_PREFIX}{day}.json"
+def save_day(s3, prefix: str, day: date, records: list[dict]) -> None:
+    """Write a day's records to S3 with record count in metadata."""
+    key = f"{prefix}{day}.json"
     body = json.dumps(records, separators=(",", ":"))
     s3.put_object(
         Bucket=BUCKET,
@@ -101,25 +174,22 @@ def save_day(s3, day: date, records: list[dict]) -> None:
     )
 
 
-def update_manifest(s3, stats: dict) -> None:
-    """Write a summary manifest so the pipeline knows what's available."""
-    key = "open311/manifest.json"
-    body = json.dumps(stats, indent=2, default=str)
-    s3.put_object(
-        Bucket=BUCKET,
-        Key=key,
-        Body=body.encode("utf-8"),
-        ContentType="application/json",
-    )
+def verify_day(s3, prefix: str, day: date, expected_count: int) -> bool:
+    """Verify a saved day file has the right record count."""
+    key = f"{prefix}{day}.json"
+    try:
+        resp = s3.head_object(Bucket=BUCKET, Key=key)
+        stored_count = resp.get("Metadata", {}).get("record-count")
+        if stored_count and int(stored_count) != expected_count:
+            log.warning("  MISMATCH %s: expected %d, got %s", day, expected_count, stored_count)
+            return False
+        return True
+    except Exception:
+        return False
 
 
 def _do_request(url: str) -> tuple[list[dict] | None, int | None]:
-    """Make a single HTTP request. Returns (data, retry_after_seconds).
-
-    On success: (data, None)
-    On 429: (None, retry_seconds from Retry-After header or default 60)
-    On other error: raises
-    """
+    """Make a single HTTP request. Returns (data, retry_after_seconds)."""
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
@@ -132,12 +202,8 @@ def _do_request(url: str) -> tuple[list[dict] | None, int | None]:
         raise
 
 
-def fetch_day(day: date, delay: float) -> tuple[list[dict], float]:
-    """Fetch all 'Other' tickets for a single day with pagination and rate limit handling.
-
-    Returns (records, current_delay). If a day is skipped due to rate limits,
-    returns empty list — the day won't be saved to S3 so it'll be retried next run.
-    """
+def fetch_day(day: date, service_code: str, delay: float) -> tuple[list[dict], float]:
+    """Fetch all tickets for a single day and service type with pagination."""
     all_records = []
     page = 1
 
@@ -145,13 +211,12 @@ def fetch_day(day: date, delay: float) -> tuple[list[dict], float]:
         params = urllib.parse.urlencode({
             "start_date": f"{day}T00:00:00Z",
             "end_date": f"{day}T23:59:59Z",
-            "service_code": SERVICE_CODE,
-            "per_page": 100,  # API max is 100
+            "service_code": service_code,
+            "per_page": 100,
             "page": page,
         })
         url = f"{OPEN311_BASE}/requests.json?{params}"
 
-        # Try the request with retries on 429
         data = None
         for attempt in range(MAX_RETRIES):
             try:
@@ -161,24 +226,21 @@ def fetch_day(day: date, delay: float) -> tuple[list[dict], float]:
                 return all_records, delay
 
             if data is not None:
-                break  # success
+                break
 
-            # Rate limited — use Retry-After header
             wait = min(retry_after or 60, MAX_DELAY)
             log.info("  RATE LIMITED on %s page %d (attempt %d/%d), Retry-After: %ds",
                      day, page, attempt + 1, MAX_RETRIES, wait)
             time.sleep(wait)
         else:
-            # All retries exhausted
             log.warning("  GIVING UP on %s after %d retries (will retry next run)", day, MAX_RETRIES)
-            return [], delay  # empty = won't be saved to S3
+            return [], delay
 
         if not data:
             break
 
         all_records.extend(data)
 
-        # Paginate if we got a full page (exactly 100 = there may be more)
         if len(data) >= 100:
             page += 1
             time.sleep(delay)
@@ -188,43 +250,14 @@ def fetch_day(day: date, delay: float) -> tuple[list[dict], float]:
     return all_records, delay
 
 
-def verify_day(s3, day: date, expected_count: int) -> bool:
-    """Verify a saved day file has the right record count."""
-    key = f"{S3_PREFIX}{day}.json"
-    try:
-        resp = s3.head_object(Bucket=BUCKET, Key=key)
-        stored_count = resp.get("Metadata", {}).get("record-count")
-        if stored_count and int(stored_count) != expected_count:
-            log.warning("  MISMATCH %s: expected %d, S3 metadata says %s", day, expected_count, stored_count)
-            return False
-        return True
-    except Exception:
-        return False
+def fetch_type(
+    s3, slug: str, service_code: str, name: str,
+    start: date, end: date, delay: float, dry_run: bool,
+) -> dict:
+    """Fetch all days for a single service type. Returns run stats."""
+    prefix = f"open311/{slug}/"
 
-
-def main():
-    parser = argparse.ArgumentParser(description="Fetch Open311 'Other' tickets to S3")
-    parser.add_argument("--start", default=START_DATE, help="Start date (YYYY-MM-DD)")
-    parser.add_argument("--end", default=None, help="End date (default: yesterday)")
-    parser.add_argument("--dry-run", action="store_true", help="Show plan without fetching")
-    parser.add_argument("--delay", type=float, default=DELAY, help="Delay between requests in seconds")
-    args = parser.parse_args()
-
-    if not BUCKET:
-        log.error("BUCKET env var not set. Need S3/Tigris credentials.")
-        sys.exit(1)
-
-    s3 = get_s3_client()
-
-    start = date.fromisoformat(args.start)
-    end = date.fromisoformat(args.end) if args.end else date.today() - timedelta(days=1)
-
-    # Check what's already in S3
-    log.info("Checking S3 for existing data...")
-    existing = list_existing_days(s3)
-    log.info("Found %d days already in S3", len(existing))
-
-    # Build list of days to fetch (newest first — recent data is most valuable)
+    existing = list_existing_days(s3, prefix)
     days_needed = []
     current = start
     while current <= end:
@@ -234,61 +267,97 @@ def main():
     days_needed.reverse()
 
     total_days = (end - start).days + 1
-    est_minutes = len(days_needed) * args.delay / 60
-    log.info("Date range: %s to %s (%d days)", start, end, total_days)
-    log.info("Already in S3: %d days", len(existing))
-    log.info("Need to fetch: %d days (est. %.0f min at %.0fs/req)", len(days_needed), est_minutes, args.delay)
+    est_minutes = len(days_needed) * delay / 60
 
-    if args.dry_run or not days_needed:
-        if not days_needed:
-            log.info("Nothing to fetch — all caught up!")
-        return
+    log.info("[%s] %s — %d/%d days needed (est. %.0f min)",
+             slug, name, len(days_needed), total_days, est_minutes)
+
+    if dry_run or not days_needed:
+        return {"slug": slug, "name": name, "fetched": 0, "skipped": 0, "existing": len(existing)}
 
     total_records = 0
     skipped = 0
-    delay = args.delay
 
     for i, day in enumerate(days_needed):
-        records, delay = fetch_day(day, delay)
+        records, delay = fetch_day(day, service_code, delay)
 
         if records:
-            save_day(s3, day, records)
-            if not verify_day(s3, day, len(records)):
-                log.warning("  Verification failed for %s, will retry next run", day)
-                # Delete the bad file so next run retries
-                s3.delete_object(Bucket=BUCKET, Key=f"{S3_PREFIX}{day}.json")
+            save_day(s3, prefix, day, records)
+            if not verify_day(s3, prefix, day, len(records)):
+                s3.delete_object(Bucket=BUCKET, Key=f"{prefix}{day}.json")
                 skipped += 1
             else:
                 total_records += len(records)
-                log.info("  %s: %d tickets (total: %d, %d/%d done)",
-                         day, len(records), total_records, i + 1, len(days_needed))
+                if len(records) > 0:
+                    log.info("  [%s] %s: %d tickets (total: %d, %d/%d)",
+                             slug, day, len(records), total_records, i + 1, len(days_needed))
         else:
             skipped += 1
 
-        # Progress every 100 days
         if i > 0 and i % 100 == 0:
-            log.info("  PROGRESS: %d/%d days done, %d records, %d skipped",
-                     i, len(days_needed), total_records, skipped)
+            log.info("  [%s] PROGRESS: %d/%d days, %d records, %d skipped",
+                     slug, i, len(days_needed), total_records, skipped)
 
         time.sleep(delay)
 
+    return {
+        "slug": slug,
+        "name": name,
+        "fetched": total_records,
+        "days_attempted": len(days_needed),
+        "skipped": skipped,
+        "existing": len(existing),
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Fetch Boston Open311 tickets to S3")
+    parser.add_argument("--start", default=START_DATE, help="Start date (YYYY-MM-DD)")
+    parser.add_argument("--end", default=None, help="End date (default: yesterday)")
+    parser.add_argument("--type", default=None, help="Slug of a single type to fetch (e.g. 'needles', 'other')")
+    parser.add_argument("--dry-run", action="store_true", help="Show plan without fetching")
+    parser.add_argument("--delay", type=float, default=DELAY, help="Delay between requests in seconds")
+    args = parser.parse_args()
+
+    if not BUCKET:
+        log.error("BUCKET env var not set. Need S3/Tigris credentials.")
+        sys.exit(1)
+
+    s3 = get_s3_client()
+    start = date.fromisoformat(args.start)
+    end = date.fromisoformat(args.end) if args.end else date.today() - timedelta(days=1)
+
+    # Determine which types to fetch
+    if args.type:
+        if args.type not in SERVICE_TYPES:
+            log.error("Unknown type: %s (available: %s)", args.type, ", ".join(SERVICE_TYPES.keys()))
+            sys.exit(1)
+        types_to_fetch = {args.type: SERVICE_TYPES[args.type]}
+    else:
+        types_to_fetch = SERVICE_TYPES
+
+    log.info("Date range: %s to %s", start, end)
+    log.info("Types to fetch: %s", ", ".join(types_to_fetch.keys()))
+
+    all_stats = []
+    for slug, (service_code, name) in types_to_fetch.items():
+        stats = fetch_type(s3, slug, service_code, name, start, end, args.delay, args.dry_run)
+        all_stats.append(stats)
+
     # Write manifest
-    all_days_in_s3 = list_existing_days(s3)
     manifest = {
         "last_run": datetime.utcnow().isoformat() + "Z",
-        "total_days_in_s3": len(all_days_in_s3),
         "date_range": {"start": str(start), "end": str(end)},
-        "this_run": {
-            "records_fetched": total_records,
-            "days_attempted": len(days_needed),
-            "days_skipped": skipped,
-        },
+        "types": all_stats,
     }
-    update_manifest(s3, manifest)
+    key = "open311/manifest.json"
+    body = json.dumps(manifest, indent=2, default=str)
+    s3.put_object(Bucket=BUCKET, Key=key, Body=body.encode("utf-8"), ContentType="application/json")
 
-    log.info("Done. %d records fetched, %d days skipped (will retry next run).", total_records, skipped)
-    if skipped:
-        log.info("Skipped days will be retried on the next run automatically.")
+    total_fetched = sum(s["fetched"] for s in all_stats)
+    total_skipped = sum(s.get("skipped", 0) for s in all_stats)
+    log.info("Done. %d records fetched across %d types, %d days skipped.",
+             total_fetched, len(all_stats), total_skipped)
 
 
 if __name__ == "__main__":

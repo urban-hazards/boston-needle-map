@@ -1,33 +1,72 @@
 # Open311 Scraper
 
-Standalone service that fetches "Other" (General Request) tickets from Boston's Open311 API and stores raw daily JSON files in S3/Tigris.
+Standalone service that fetches **all 16 service types** from Boston's Open311 API and stores raw daily JSON files in S3/Tigris.
 
-## What it does
+## Why not just use CKAN?
 
-- Fetches tickets day-by-day from the Open311 API (back to 2023-01-01)
-- Stores each day as `open311/raw/YYYY-MM-DD.json` in S3
-- Skips days already fetched (resumable)
-- Handles rate limiting with exponential backoff
-- Writes `open311/manifest.json` with run metadata
+The city publishes 311 data in bulk on data.boston.gov, but that export **strips critical fields**:
+
+| Field | Open311 API | CKAN Bulk |
+|-------|-------------|-----------|
+| Citizen description (free text) | Present (94% of tickets) | **Removed** |
+| Photos (Cloudinary URLs) | Present (85% of needle tickets) | **Always empty** |
+| Staff status notes | Present | Truncated to `closure_reason` only |
+| "Other" tickets (General Request) | Present (142k+) | **Missing entirely** |
+
+This scraper preserves the complete records that CKAN strips down.
+
+## Service types
+
+All 16 types exposed by the BOS:311 app are scraped:
+
+- `other` — General Request (invisible in CKAN)
+- `needles` — Needle Cleanup
+- `encampments` — Encampments
+- `potholes` — Pothole Repair
+- `sidewalks` — Broken Sidewalk
+- `dead-animals` — Dead Animal Pickup
+- `graffiti` — Illegal Graffiti
+- `litter` — Litter
+- `rodents` — Rodent Sighting
+- `trash-cans` — Overflowing Trash Can
+- `abandoned-vehicles` — Abandoned Vehicle
+- `parking` — Illegal Parking
+- `traffic-signals` — Traffic Signal
+- `signs` — Damaged Sign
+- `abandoned-bikes` — Abandoned Bicycle
+- `illegal-trash` — Residential Trash out Illegally
+
+## S3 layout
+
+```
+open311/
+  other/2023-01-01.json
+  needles/2023-01-01.json
+  potholes/2023-01-01.json
+  ...
+  manifest.json
+```
 
 ## Railway deployment
 
-Deploy as a **cron service** in the same Railway project as the main pipeline. It shares the same Tigris bucket via env vars:
+Deploy as a **cron service** in the same Railway project. Shares the same Tigris bucket.
 
-- `BUCKET` — Tigris bucket name
-- `ACCESS_KEY_ID` — Tigris access key
-- `SECRET_ACCESS_KEY` — Tigris secret key
-- `ENDPOINT` — Tigris endpoint URL
-- `REGION` — defaults to `us-east-1`
+Env vars: `BUCKET`, `ACCESS_KEY_ID`, `SECRET_ACCESS_KEY`, `ENDPOINT`, `REGION`
 
-Set the cron schedule to `0 6 * * *` (daily at 6 AM UTC) or similar.
+Root directory: `services/open311-scraper`
 
-Set the Railway **root directory** to `services/open311-scraper`.
+Cron schedule: `0 6 * * *` (daily at 6 AM UTC)
 
 ## First run
 
-The first run backfills all days from 2023-01-01 to yesterday. This takes 30-60 minutes depending on rate limiting. Subsequent runs only fetch new days (seconds).
+Backfills from 2023-01-01 across all 16 types. Full backfill takes ~36 hours at the API rate limit. Each type is independently resumable — if the service restarts, it skips days already in S3.
 
-## Data format
+## Usage
 
-Each day file contains an array of Open311 service request objects. The pipeline can read these from S3 at `open311/raw/*` to incorporate into analysis.
+```bash
+python fetch.py                    # fetch all types, backfill from 2023
+python fetch.py --type other       # fetch only "Other" tickets
+python fetch.py --type needles     # fetch only needle tickets
+python fetch.py --start 2025-01-01 # start from a specific date
+python fetch.py --dry-run          # show plan without fetching
+```

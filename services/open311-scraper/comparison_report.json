@@ -1,0 +1,1695 @@
+{
+  "generated": "2026-04-09",
+  "date_range": {
+    "start": "2026-04-01",
+    "end": "2026-04-03"
+  },
+  "methodology": "For each ticket type and date, we fetched records from both the Open311 API and the CKAN bulk data API. Records were matched by service_request_id (Open311) to case_enquiry_id (CKAN). For each matched pair, we checked whether the citizen's description, submitted photo, and status notes survived into the CKAN export.",
+  "types": {
+    "needles": {
+      "days": {
+        "2026-04-01": {
+          "counts": {
+            "open311": 19,
+            "ckan": 22,
+            "matched_by_id": 17,
+            "open311_only": 2,
+            "ckan_only": 5
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 16,
+              "in_ckan": 0,
+              "pct_with_desc_api": 94.1,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 15,
+              "in_ckan": 0,
+              "pct_with_photo_api": 88.2,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 17,
+              "in_ckan_closure_reason": 17,
+              "pct_with_notes_api": 100.0,
+              "pct_with_closure_ckan": 100.0
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006599255",
+              "date": "2026-04-01",
+              "api_description": "Needle",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775076938/boston/production/ea86dm2fu3ukuxxzecul.jpg#spot=c916039c-9ab1-4780-94f8-8f8b350340e4",
+              "api_status_notes": "Resolved. 1dw.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 17:22:26 EDT 2026 Resolved 1dw",
+              "address": "190 W Springfield St, Roxbury, Ma, 02118"
+            },
+            {
+              "ticket_id": "101006599252",
+              "date": "2026-04-01",
+              "api_description": "Needle",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775076192/boston/production/urkmfkt6gboe9wgdue9x.jpg#spot=4354ae1b-1713-494d-930e-640a30cef836",
+              "api_status_notes": "Resolved. 1dw.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 17:06:56 EDT 2026 Resolved 1dw",
+              "address": "13 R Chestnut Ave, Jamaica Plain, Ma, 02130"
+            },
+            {
+              "ticket_id": "101006599228",
+              "date": "2026-04-01",
+              "api_description": "Mattress under bridge and needles",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775076637:boston:production:j54v7r6sdkxn5yb4c7rn/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775076637:boston:production:j54v7r6sdkxn5yb4c7rn/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775074452/boston/production/ejojcuhjovtrl1oxqris.jpg",
+              "api_status_notes": "Resolved. No sharps located here. Drug trash only. Removed drug trash. AD.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 16:50:42 EDT 2026 Resolved No sharps located here. Drug trash only. Removed drug trash. AD",
+              "address": "403 Old Colony Ave, South Boston, Ma, 02127"
+            },
+            {
+              "ticket_id": "101006599132",
+              "date": "2026-04-01",
+              "api_description": "The constituent reports a needle at the service location (in front of where the playground is located on the sidewalk) | Needle Quantity: [One]  Property Location Type: [Public]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775072129:boston:production:nwdstnryze1wnc5r9kff/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775072129/boston/production/nwdstnryze1wnc5r9kff.jpg",
+              "api_status_notes": "Resolved. 0syr 1 dt glass pipe dw.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 15:35:36 EDT 2026 Resolved 0syr 1 dt glass pipe dw",
+              "address": "5 Congress St, Boston, Ma, 02203"
+            },
+            {
+              "ticket_id": "101006599103",
+              "date": "2026-04-01",
+              "api_description": "Needles in front of St Francis House",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775068954/boston/production/izksmti70j0xtjpgkiek.jpg#spot=46da8499-3c0a-4f72-9067-2572b8ce242f",
+              "api_status_notes": "Resolved. 3dw.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 15:16:21 EDT 2026 Resolved 3dw",
+              "address": "Intersection Of Boylston Sq And Boylston St, Boston, Ma"
+            }
+          ]
+        },
+        "2026-04-02": {
+          "counts": {
+            "open311": 20,
+            "ckan": 16,
+            "matched_by_id": 16,
+            "open311_only": 4,
+            "ckan_only": 0
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 15,
+              "in_ckan": 0,
+              "pct_with_desc_api": 93.8,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 13,
+              "in_ckan": 0,
+              "pct_with_photo_api": 81.2,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 16,
+              "in_ckan_closure_reason": 16,
+              "pct_with_notes_api": 100.0,
+              "pct_with_closure_ckan": 100.0
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006600318",
+              "date": "2026-04-02",
+              "api_description": "Just to note there are bent open  needles ( 2 visible that we saw ). This may just be there weekly trash? It looks as though they moved out although  when taking pics w/ another neighbor, White Dodge SUV PULLED IN and a large young Blk man told us to mind our Fn business n get the F out . So many ppl in and out no one knows whose trash , who lives there parks card every where etc. Kids will be going to school right there at 8 am",
+              "api_photo_url": null,
+              "api_status_notes": "Resolved. We walked around the whole house and found nothing but a few empty nip bottles.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 21:04:13 EDT 2026 Resolved We walked around the whole house and found nothing but a few empty nip bottles.",
+              "address": "7 Rockingham Ave, Mattapan, Ma, 02132"
+            },
+            {
+              "ticket_id": "101006600271",
+              "date": "2026-04-02",
+              "api_description": "Syringe cleanup at school field by large rocks",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775176902:boston:production:kjhrcqnu5a5xim9rxi4a/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775176902:boston:production:kjhrcqnu5a5xim9rxi4a/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775166944/boston/production/ki1eegb9xkv8vaqze2sj.jpg",
+              "api_status_notes": "Resolved. We went to the school, and after an extensive search we unfortunately found nothing.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 20:41:49 EDT 2026 Resolved We went to the school  and after an extensive search we unfortunately found nothing.",
+              "address": "264 272 Columbia Rd, Dorchester, Ma, 02121"
+            },
+            {
+              "ticket_id": "101006600267",
+              "date": "2026-04-02",
+              "api_description": "Needle on stoop at 207 gold st",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775175216:boston:production:cfysotc6cwuy9glbfp3o/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775175216/boston/production/cfysotc6cwuy9glbfp3o.jpg",
+              "api_status_notes": "Resolved. We found nothing needles.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 20:13:44 EDT 2026 Resolved We found nothing needles",
+              "address": "207 Gold St, South Boston, Ma, 02127"
+            },
+            {
+              "ticket_id": "101006600295",
+              "date": "2026-04-02",
+              "api_description": "Needle in rear of 78 w concord st. Alley- intersection of deblois and deacon st in south end",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775169482:boston:production:w5bxxhuxs7gszlvebkj9/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775169481/boston/production/acyqjxcao2igh3k2xy4g.jpg",
+              "api_status_notes": "Resolved. We found the one needle that was reported and thats all.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 19:58:03 EDT 2026 Resolved We found the one needle that was reported and thats all",
+              "address": "80 W Concord St, Roxbury, Ma, 02118"
+            },
+            {
+              "ticket_id": "101006600265",
+              "date": "2026-04-02",
+              "api_description": "-- auto translated (en-US) -- How can you not find the location? It\u2019s dalton street going over the mass pike. I literally dropped a pin -- original (en-US) -- How can you not find the location? It\u2019s dalton street going over the mass pike. I literally dropped a pin",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_364,w_236//l_v1775168088:boston:production:sjufevemxrbwqsircxix/c_limit,h_364,w_236/fl_layer_apply,g_north_west,x_266/l_v1775168088:boston:production:sjufevemxrbwqsircxix/c_limit,h_364,w_236/fl_layer_apply,g_north_west,x_522/l_v1775168089:boston:production:q211jahfdayd0lw0rpu3/c_limit,h_364,w_236/fl_layer_apply,g_north_west,x_0,y_394/l_v1775168089:boston:production:q211jahfdayd0lw0rpu3/c_limit,h_364,w_236/fl_layer_apply,g_north_west,x_266,y_394/v1775166400/boston/production/lfy8s4j5dbj0wchoshqb.jpg",
+              "api_status_notes": "Resolved. Nothing at location.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 18:14:53 EDT 2026 Resolved Nothing at location",
+              "address": "Intersection Of Dalton St And Scotia St, Boston, Ma"
+            }
+          ]
+        },
+        "2026-04-03": {
+          "counts": {
+            "open311": 15,
+            "ckan": 17,
+            "matched_by_id": 15,
+            "open311_only": 0,
+            "ckan_only": 2
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 14,
+              "in_ckan": 0,
+              "pct_with_desc_api": 93.3,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 12,
+              "in_ckan": 0,
+              "pct_with_photo_api": 80.0,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 15,
+              "in_ckan_closure_reason": 15,
+              "pct_with_notes_api": 100.0,
+              "pct_with_closure_ckan": 100.0
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006601329",
+              "date": "2026-04-03",
+              "api_description": "Bunch of needles in between two green electrical cabinets. I count atleast 10",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775262517:boston:production:xgjql6ri3iuyldqyklwq/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775262517:boston:production:xgjql6ri3iuyldqyklwq/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775250997/boston/production/bowol0rnzp4xrlb0snoi.jpg",
+              "api_status_notes": "Noted. Unresolved. Need an updated  location of needle pick up.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Fri Apr 03 20:28:42 EDT 2026 Noted Unresolved. Need an updated  location of needle pick up.",
+              "address": "316 Huntington Ave, Boston, Ma, 02115"
+            },
+            {
+              "ticket_id": "101006601373",
+              "date": "2026-04-03",
+              "api_description": "Needle",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775253845/boston/production/p6m91t7e5qyyqyxd7qkr.jpg#spot=e5821ce4-246d-4359-af3d-6879bd41eb11",
+              "api_status_notes": "Resolved. Df recovered 4.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Fri Apr 03 18:31:56 EDT 2026 Resolved Df recovered 4",
+              "address": "163 Shirley St, Roxbury, Ma, 02119"
+            },
+            {
+              "ticket_id": "101006601290",
+              "date": "2026-04-03",
+              "api_description": "Needle",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775248741:boston:production:uxsepprjj9kzilnqts93/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775248740/boston/production/ftng16407cmeh2bcuudx.jpg",
+              "api_status_notes": "Resolved. Df recovered 1.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Fri Apr 03 18:13:41 EDT 2026 Resolved Df recovered 1",
+              "address": "9 Commercial St, Boston, Ma, 02109"
+            },
+            {
+              "ticket_id": "101006601289",
+              "date": "2026-04-03",
+              "api_description": "needle under the bushes",
+              "api_photo_url": null,
+              "api_status_notes": "Resolved. Df recovered 2.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Fri Apr 03 17:59:51 EDT 2026 Resolved Df recovered 2",
+              "address": "Intersection Of Ferrin St And Lowney Way, Charlestown, Ma"
+            },
+            {
+              "ticket_id": "101006601041",
+              "date": "2026-04-03",
+              "api_description": "Needle",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775237656/boston/production/ehgycwdnol0rl4zpiwe7.jpg#spot=2c1ca7ee-ab4a-4ad8-9fb5-f210f073f0c0",
+              "api_status_notes": "Resolved. 1dw.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Fri Apr 03 14:16:35 EDT 2026 Resolved 1dw",
+              "address": "785 Albany St, Roxbury, Ma, 02118"
+            }
+          ]
+        }
+      },
+      "totals": {
+        "counts": {
+          "open311": 54,
+          "ckan": 55,
+          "matched_by_id": 52,
+          "open311_only": 2,
+          "ckan_only": 3
+        },
+        "stripped_fields": {
+          "description": {
+            "in_api": 49,
+            "in_ckan": 0,
+            "pct_with_desc_api": 94.2,
+            "pct_with_desc_ckan": 0.0
+          },
+          "photos": {
+            "in_api": 44,
+            "in_ckan": 0,
+            "pct_with_photo_api": 84.6,
+            "pct_with_photo_ckan": 0.0
+          },
+          "status_notes": {
+            "in_api": 52,
+            "in_ckan_closure_reason": 52,
+            "pct_with_notes_api": 100.0,
+            "pct_with_closure_ckan": 100.0
+          }
+        },
+        "examples": [
+          {
+            "ticket_id": "101006599255",
+            "date": "2026-04-01",
+            "api_description": "Needle",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775076938/boston/production/ea86dm2fu3ukuxxzecul.jpg#spot=c916039c-9ab1-4780-94f8-8f8b350340e4",
+            "api_status_notes": "Resolved. 1dw.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 17:22:26 EDT 2026 Resolved 1dw",
+            "address": "190 W Springfield St, Roxbury, Ma, 02118"
+          },
+          {
+            "ticket_id": "101006599252",
+            "date": "2026-04-01",
+            "api_description": "Needle",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775076192/boston/production/urkmfkt6gboe9wgdue9x.jpg#spot=4354ae1b-1713-494d-930e-640a30cef836",
+            "api_status_notes": "Resolved. 1dw.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 17:06:56 EDT 2026 Resolved 1dw",
+            "address": "13 R Chestnut Ave, Jamaica Plain, Ma, 02130"
+          },
+          {
+            "ticket_id": "101006599228",
+            "date": "2026-04-01",
+            "api_description": "Mattress under bridge and needles",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775076637:boston:production:j54v7r6sdkxn5yb4c7rn/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775076637:boston:production:j54v7r6sdkxn5yb4c7rn/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775074452/boston/production/ejojcuhjovtrl1oxqris.jpg",
+            "api_status_notes": "Resolved. No sharps located here. Drug trash only. Removed drug trash. AD.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 16:50:42 EDT 2026 Resolved No sharps located here. Drug trash only. Removed drug trash. AD",
+            "address": "403 Old Colony Ave, South Boston, Ma, 02127"
+          },
+          {
+            "ticket_id": "101006599132",
+            "date": "2026-04-01",
+            "api_description": "The constituent reports a needle at the service location (in front of where the playground is located on the sidewalk) | Needle Quantity: [One]  Property Location Type: [Public]",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775072129:boston:production:nwdstnryze1wnc5r9kff/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775072129/boston/production/nwdstnryze1wnc5r9kff.jpg",
+            "api_status_notes": "Resolved. 0syr 1 dt glass pipe dw.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 15:35:36 EDT 2026 Resolved 0syr 1 dt glass pipe dw",
+            "address": "5 Congress St, Boston, Ma, 02203"
+          },
+          {
+            "ticket_id": "101006599103",
+            "date": "2026-04-01",
+            "api_description": "Needles in front of St Francis House",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775068954/boston/production/izksmti70j0xtjpgkiek.jpg#spot=46da8499-3c0a-4f72-9067-2572b8ce242f",
+            "api_status_notes": "Resolved. 3dw.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 15:16:21 EDT 2026 Resolved 3dw",
+            "address": "Intersection Of Boylston Sq And Boylston St, Boston, Ma"
+          }
+        ]
+      }
+    },
+    "encampments": {
+      "days": {
+        "2026-04-01": {
+          "counts": {
+            "open311": 8,
+            "ckan": 8,
+            "matched_by_id": 7,
+            "open311_only": 1,
+            "ckan_only": 1
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 6,
+              "in_ckan": 0,
+              "pct_with_desc_api": 85.7,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 3,
+              "in_ckan": 0,
+              "pct_with_photo_api": 42.9,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 5,
+              "in_ckan_closure_reason": 5,
+              "pct_with_notes_api": 71.4,
+              "pct_with_closure_ckan": 71.4
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006599227",
+              "date": "2026-04-01",
+              "api_description": "Previous report is for Boston common near tennis courts homeless stuff all over the area. Health hazard.",
+              "api_photo_url": null,
+              "api_status_notes": "closed per CRT.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-02 10:50:58.68 closed per CRT",
+              "address": "167 Tremont St, Boston, Ma, 02108"
+            },
+            {
+              "ticket_id": "101006598925",
+              "date": "2026-04-01",
+              "api_description": "Public intoxication, noise. Rockford Street.",
+              "api_photo_url": null,
+              "api_status_notes": "closed per CRT.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-02 10:50:24.677 closed per CRT",
+              "address": "33 Shirley St, Roxbury, Ma, 02119"
+            },
+            {
+              "ticket_id": "101006599356",
+              "date": "2026-04-01",
+              "api_description": "Fence at abandoned property is down allowing for people to enter the property illegally and camp out there. It is causing issues for the neighborhood and unwanted crime. People come there to use drugs and party like animals. Something needs to be done about this. It is completely uncalled for to have it like this. Please take care of this dangerous property before someone gets seriously hurt!",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775083125/boston/production/fsyup1e0p0tapanzixf4.jpg#spot=0afdbb70-9ea1-4334-9d53-fe307c45fe8f",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "12 R Ericsson St, Dorchester, Ma, 02122"
+            },
+            {
+              "ticket_id": "101006598406",
+              "date": "2026-04-01",
+              "api_description": "The constituent states theres homeless hanging out in the back of this building. They are leaving belongings at this location. Residents dont feel safe because their homes is near this area where the homeless is hanging out. They are doing illegal things back there as well. Requesting assistance with this matter. | Did the resident observe substance use: [No]",
+              "api_photo_url": null,
+              "api_status_notes": "Case Resolved. Outreach has been triaged.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-01 12:41:48.247 Case Resolved Outreach has been triaged",
+              "address": "460 Geneva Ave, Dorchester, Ma, 02122"
+            },
+            {
+              "ticket_id": "101006598451",
+              "date": "2026-04-01",
+              "api_description": "Encampment propane, excrement",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775045396/boston/production/gpbljbwz4wksu0h6v3nb.jpg#spot=dd59256f-bd56-46f5-a87f-3a1a51faa1a1",
+              "api_status_notes": "Case Resolved. Outreach has been triage to assess, case can be referred to our state partners.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-01 10:14:45.99 Case Resolved Outreach has been triage to assess  case can be referred to our state partners",
+              "address": "Intersection Of Boston University Brg And Soldiers Field Rd And James J Storrow Memorial Dr, Boston, Ma"
+            }
+          ]
+        },
+        "2026-04-02": {
+          "counts": {
+            "open311": 2,
+            "ckan": 2,
+            "matched_by_id": 1,
+            "open311_only": 1,
+            "ckan_only": 1
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 1,
+              "in_ckan": 0,
+              "pct_with_desc_api": 100.0,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 0,
+              "in_ckan": 0,
+              "pct_with_photo_api": 0.0,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 1,
+              "in_ckan_closure_reason": 1,
+              "pct_with_notes_api": 100.0,
+              "pct_with_closure_ckan": 100.0
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006600118",
+              "date": "2026-04-02",
+              "api_description": "Unhoused person sleeping on grass.",
+              "api_photo_url": null,
+              "api_status_notes": "Case Resolved. crt handled.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-03 10:36:54.35 Case Resolved crt handled",
+              "address": "Intersection Of Washington St And South St, Jamaica Plain, Ma"
+            }
+          ]
+        },
+        "2026-04-03": {
+          "counts": {
+            "open311": 5,
+            "ckan": 6,
+            "matched_by_id": 4,
+            "open311_only": 1,
+            "ckan_only": 2
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 4,
+              "in_ckan": 0,
+              "pct_with_desc_api": 100.0,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 2,
+              "in_ckan": 0,
+              "pct_with_photo_api": 50.0,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 1,
+              "in_ckan_closure_reason": 1,
+              "pct_with_notes_api": 25.0,
+              "pct_with_closure_ckan": 25.0
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006600953",
+              "date": "2026-04-03",
+              "api_description": "One woman living in a maroon mercedes 4BTE36, caller was talking police captain in the area about the issue. https://www.nbcboston.com/news/local/police-seeking-to-identify-man-in-boston-house-break/3915795/ marijuana drug use, attached news article caller is reporting the boyfriend of the woman is the man in the article. Requesting someone reach out to try to get her housing and assist getting her off the street and stopping living in car. All of devon street towards the address are senior citi",
+              "api_photo_url": null,
+              "api_status_notes": "Case Resolved. Outreach has been triaged.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-03 13:46:10.543 Case Resolved Outreach has been triaged",
+              "address": "14 Devon St, Dorchester, Ma, 02121"
+            },
+            {
+              "ticket_id": "101006600866",
+              "date": "2026-04-03",
+              "api_description": "In the area of Currier St/Kennebec, Mattapan Ma in the back of the cemetery ,a camper or  Mobile home been parked for the last two years with covered license plates with people living in, please send someone to examine.",
+              "api_photo_url": null,
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "14 14 R Kennebec St, Mattapan, Ma, 02126"
+            },
+            {
+              "ticket_id": "101006600834",
+              "date": "2026-04-03",
+              "api_description": "Encampment",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775228388/boston/production/vrdtx9sxvdurddtyzkj6.jpg#spot=0c523696-df0e-415b-a61c-8fcd6a5d98ec",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "63 Kenton Rd, Jamaica Plain, Ma, 02130"
+            },
+            {
+              "ticket_id": "101006600770",
+              "date": "2026-04-03",
+              "api_description": "Empty Encampment. 88 Black Falcon Drive and Dry Dock Avenue",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775226013:boston:production:nmi6ouhultmkazklplkq/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775226014:boston:production:tbprjpppp9ekavrwutow/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775226012/boston/production/cjzwcxnp6gkdgzdnjanl.jpg",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "36 Dry Dock Ave, Boston, Ma, 02210"
+            }
+          ]
+        }
+      },
+      "totals": {
+        "counts": {
+          "open311": 15,
+          "ckan": 16,
+          "matched_by_id": 14,
+          "open311_only": 1,
+          "ckan_only": 2
+        },
+        "stripped_fields": {
+          "description": {
+            "in_api": 12,
+            "in_ckan": 0,
+            "pct_with_desc_api": 85.7,
+            "pct_with_desc_ckan": 0.0
+          },
+          "photos": {
+            "in_api": 6,
+            "in_ckan": 0,
+            "pct_with_photo_api": 42.9,
+            "pct_with_photo_ckan": 0.0
+          },
+          "status_notes": {
+            "in_api": 8,
+            "in_ckan_closure_reason": 8,
+            "pct_with_notes_api": 57.1,
+            "pct_with_closure_ckan": 57.1
+          }
+        },
+        "examples": [
+          {
+            "ticket_id": "101006599227",
+            "date": "2026-04-01",
+            "api_description": "Previous report is for Boston common near tennis courts homeless stuff all over the area. Health hazard.",
+            "api_photo_url": null,
+            "api_status_notes": "closed per CRT.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : 2026-04-02 10:50:58.68 closed per CRT",
+            "address": "167 Tremont St, Boston, Ma, 02108"
+          },
+          {
+            "ticket_id": "101006598925",
+            "date": "2026-04-01",
+            "api_description": "Public intoxication, noise. Rockford Street.",
+            "api_photo_url": null,
+            "api_status_notes": "closed per CRT.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : 2026-04-02 10:50:24.677 closed per CRT",
+            "address": "33 Shirley St, Roxbury, Ma, 02119"
+          },
+          {
+            "ticket_id": "101006599356",
+            "date": "2026-04-01",
+            "api_description": "Fence at abandoned property is down allowing for people to enter the property illegally and camp out there. It is causing issues for the neighborhood and unwanted crime. People come there to use drugs and party like animals. Something needs to be done about this. It is completely uncalled for to have it like this. Please take care of this dangerous property before someone gets seriously hurt!",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775083125/boston/production/fsyup1e0p0tapanzixf4.jpg#spot=0afdbb70-9ea1-4334-9d53-fe307c45fe8f",
+            "api_status_notes": null,
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": null,
+            "address": "12 R Ericsson St, Dorchester, Ma, 02122"
+          },
+          {
+            "ticket_id": "101006598406",
+            "date": "2026-04-01",
+            "api_description": "The constituent states theres homeless hanging out in the back of this building. They are leaving belongings at this location. Residents dont feel safe because their homes is near this area where the homeless is hanging out. They are doing illegal things back there as well. Requesting assistance with this matter. | Did the resident observe substance use: [No]",
+            "api_photo_url": null,
+            "api_status_notes": "Case Resolved. Outreach has been triaged.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : 2026-04-01 12:41:48.247 Case Resolved Outreach has been triaged",
+            "address": "460 Geneva Ave, Dorchester, Ma, 02122"
+          },
+          {
+            "ticket_id": "101006598451",
+            "date": "2026-04-01",
+            "api_description": "Encampment propane, excrement",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775045396/boston/production/gpbljbwz4wksu0h6v3nb.jpg#spot=dd59256f-bd56-46f5-a87f-3a1a51faa1a1",
+            "api_status_notes": "Case Resolved. Outreach has been triage to assess, case can be referred to our state partners.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : 2026-04-01 10:14:45.99 Case Resolved Outreach has been triage to assess  case can be referred to our state partners",
+            "address": "Intersection Of Boston University Brg And Soldiers Field Rd And James J Storrow Memorial Dr, Boston, Ma"
+          }
+        ]
+      }
+    },
+    "potholes": {
+      "days": {
+        "2026-04-01": {
+          "counts": {
+            "open311": 125,
+            "ckan": 126,
+            "matched_by_id": 118,
+            "open311_only": 7,
+            "ckan_only": 8
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 76,
+              "in_ckan": 0,
+              "pct_with_desc_api": 64.4,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 102,
+              "in_ckan": 0,
+              "pct_with_photo_api": 86.4,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 93,
+              "in_ckan_closure_reason": 87,
+              "pct_with_notes_api": 78.8,
+              "pct_with_closure_ckan": 73.7
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006598983",
+              "date": "2026-04-01",
+              "api_description": "There are multiple potholes on the crosswalk",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775748981:boston:production:xs26pjfqk1fhw5quksbe/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775748981:boston:production:xs26pjfqk1fhw5quksbe/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775063722/boston/production/z3fhzzlegozys1r2c6vs.jpg",
+              "api_status_notes": "Resolved. Patched.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Farrington Ave And Harvard Ave, Allston, Ma"
+            },
+            {
+              "ticket_id": "101006599317",
+              "date": "2026-04-01",
+              "api_description": "Large pothole, Edwardson St & Lewiston St.",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775572122:boston:production:n2kknlrmt6n7vxzspxgw/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775572122/boston/production/n2kknlrmt6n7vxzspxgw.jpg",
+              "api_status_notes": "Resolved. Potholes completed.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Edwardson St And Lewiston St, Hyde Park, Ma"
+            },
+            {
+              "ticket_id": "101006599100",
+              "date": "2026-04-01",
+              "api_description": "Thank you very much for addressing this concern 101006595867; however, there are still at least 4 big potholes remaining on W Huntington, between W Newton/Belvidere and the Mass Ave underpass, the worst being just before the underpass on the downhill slope. Thank you!",
+              "api_photo_url": null,
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Massachusetts Ave And Huntington Ave, Boston, Ma"
+            },
+            {
+              "ticket_id": "101006599326",
+              "date": "2026-04-01",
+              "api_description": "Deep  Potholes Public Alley 301 near Pinckney Street in Beacon Hill | Where exactly on the pavement is the pothole: [On Roadway]  What is the approximate size of the pothole: [See picture on Images tab]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775081735/boston/production/cghotar61p8npznq6jgm.jpg#spot=a857ad13-d52d-4bbc-9f97-8a0b1164153c",
+              "api_status_notes": "Case Resolved. Patched 4/3.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "94 Pinckney St, Boston, Ma, 02108"
+            },
+            {
+              "ticket_id": "101006598951",
+              "date": "2026-04-01",
+              "api_description": "-- auto translated (en-US) -- Sink hole - picture doesn\u2019t do it justice. Looks like it\u2019s getting worse by the day!! -- original (en-US) -- Sink hole - picture doesn\u2019t do it justice. Looks like it\u2019s getting worse by the day!!",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775497091:boston:production:f3k0hi9u5riy8tduk0hj/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775497091:boston:production:f3k0hi9u5riy8tduk0hj/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775062499/boston/production/p0uu6sjqb9avaovtpzh9.jpg",
+              "api_status_notes": "Resolved. This location was addressed.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "10 Kittredge St, Roslindale, Ma, 02131"
+            }
+          ]
+        },
+        "2026-04-02": {
+          "counts": {
+            "open311": 61,
+            "ckan": 58,
+            "matched_by_id": 53,
+            "open311_only": 8,
+            "ckan_only": 5
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 53,
+              "in_ckan": 0,
+              "pct_with_desc_api": 100.0,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 41,
+              "in_ckan": 0,
+              "pct_with_photo_api": 77.4,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 34,
+              "in_ckan_closure_reason": 24,
+              "pct_with_notes_api": 64.2,
+              "pct_with_closure_ckan": 45.3
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006600140",
+              "date": "2026-04-02",
+              "api_description": "Potholes in front of 578, 580, 566 and 564 River Street Mattapan",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775748119:boston:production:zy4iebhebfq0viaqscus/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775748119/boston/production/zy4iebhebfq0viaqscus.jpg",
+              "api_status_notes": "Resolved. Overlay completed of above addresses.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Topalian St And River St, Mattapan, Ma"
+            },
+            {
+              "ticket_id": "101006599636",
+              "date": "2026-04-02",
+              "api_description": "Right lane, eastbound | Where exactly on the pavement is the pothole: [On Roadway]  What is the approximate size of the pothole: [See picture on Images tab]",
+              "api_photo_url": null,
+              "api_status_notes": "Case Referred to External Agency. This location is under the jurisdiction of the Massachusetts Department of Conservation and Recreation and not the City of Boston. Mass DCR has received this complaint from us and will forward it to the appropriate district to review. Thank you.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Nonantum Rd And Brooks St, Brighton, Ma"
+            },
+            {
+              "ticket_id": "101006599963",
+              "date": "2026-04-02",
+              "api_description": "request for filing of multiple potholes on riley rd | Where exactly on the pavement is the pothole: [On Roadway]  What is the approximate size of the pothole: [multiple]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775569288:boston:production:qgtk6qehhinujzvgbqhc/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775569288/boston/production/qgtk6qehhinujzvgbqhc.jpg",
+              "api_status_notes": "Resolved. 17 potholes completed.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Sierra Rd And Riley Rd, Hyde Park, Ma"
+            },
+            {
+              "ticket_id": "101006599861",
+              "date": "2026-04-02",
+              "api_description": "The Columbus ave section from Roxbury community college to the Boston police headquarters in Roxbury has a dozen deep potholes",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775565107:boston:production:omerrwwbguh9eqtzyicc/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775565108:boston:production:cgyvxvyrlfhynbufjbf2/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775565106/boston/production/ohz58m4wrlv05bhukgfm.jpg",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "1234 Columbus Ave, Roxbury, Ma, 02119"
+            },
+            {
+              "ticket_id": "101006599871",
+              "date": "2026-04-02",
+              "api_description": "Fill pothole | Where exactly on the pavement is the pothole: [On Roadway]  What is the approximate size of the pothole: [See picture on Images tab]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775144313/boston/production/xfn7pj4yffpnfcnt5vcs.jpg#spot=1cda5c08-6214-4499-a9a2-b290c283ad8b",
+              "api_status_notes": "Case Resolved. PATCHED AROUND THE MANHOLE. 4/2.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "3296 Washington St, Jamaica Plain, Ma, 02130"
+            }
+          ]
+        },
+        "2026-04-03": {
+          "counts": {
+            "open311": 76,
+            "ckan": 75,
+            "matched_by_id": 71,
+            "open311_only": 5,
+            "ckan_only": 4
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 65,
+              "in_ckan": 0,
+              "pct_with_desc_api": 91.5,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 55,
+              "in_ckan": 0,
+              "pct_with_photo_api": 77.5,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 38,
+              "in_ckan_closure_reason": 17,
+              "pct_with_notes_api": 53.5,
+              "pct_with_closure_ckan": 23.9
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006600693",
+              "date": "2026-04-03",
+              "api_description": "Sinkhole forming in asphalt parking area behind 235 Beacon St. Ground is collapsing and appears to extend below the surface, indicating a possible void underneath. Located next to an active parking space, creating a safety concern for vehicles and pedestrians. Surrounding pavement shows cracking and deterioration. Concerned this may be related to drainage or underground infrastructure and could worsen if not addressed.",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775772616:boston:production:qfxx08nmsq6bniorcylo/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775772616:boston:production:qfxx08nmsq6bniorcylo/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775223141/boston/production/hyl9y531gw6dbkzw2rd3.jpg",
+              "api_status_notes": "Resolved. This is on private property, please reach out to ISD to address issues at this location.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "235 Beacon St, Boston, Ma, 02116"
+            },
+            {
+              "ticket_id": "101006601334",
+              "date": "2026-04-03",
+              "api_description": "Pothole in road",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775749958:boston:production:xyow6va2aqhzxysqgysp/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775749958:boston:production:xyow6va2aqhzxysqgysp/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775251309/boston/production/wrqpxuue8fqe9kzezhy6.jpg",
+              "api_status_notes": "Resolved. Patched.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Riverdale St And Western Ave, Allston, Ma"
+            },
+            {
+              "ticket_id": "101006601390",
+              "date": "2026-04-03",
+              "api_description": "Constituent states that there are numerous potholes at the address, please assist. | Where exactly on the pavement is the pothole: [On Roadway]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775748038:boston:production:hembru9moqsy7szwrnqk/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775748038/boston/production/hembru9moqsy7szwrnqk.jpg",
+              "api_status_notes": "Noted. Area marked out for construction and presently under construction. See attached photo.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "741 Beechmont St, Hyde Park, Ma, 02136"
+            },
+            {
+              "ticket_id": "101006601368",
+              "date": "2026-04-03",
+              "api_description": "Deep pothole on Lake Street in Brighton.",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775740836:boston:production:jgjkm3z5pjn5mr7uyujb/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775740836:boston:production:jgjkm3z5pjn5mr7uyujb/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775253519/boston/production/rabtgve6od6lqauax66g.jpg",
+              "api_status_notes": "Resolved. Patched.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "13 Rogers Park Ave, Brighton, Ma, 02135"
+            },
+            {
+              "ticket_id": "101006600772",
+              "date": "2026-04-03",
+              "api_description": "\"Potholes on Tremont St heading towards JP. Entire street.\" NFI from caller. | Where exactly on the pavement is the pothole: [On Roadway]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775738620:boston:production:kuh2vfs0oxj3q7kusdm2/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775738619/boston/production/ryftfngjafignfgqdvj4.jpg",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Ruggles St And Tremont St, Mission Hill, Ma"
+            }
+          ]
+        }
+      },
+      "totals": {
+        "counts": {
+          "open311": 262,
+          "ckan": 259,
+          "matched_by_id": 255,
+          "open311_only": 7,
+          "ckan_only": 4
+        },
+        "stripped_fields": {
+          "description": {
+            "in_api": 207,
+            "in_ckan": 0,
+            "pct_with_desc_api": 81.2,
+            "pct_with_desc_ckan": 0.0
+          },
+          "photos": {
+            "in_api": 208,
+            "in_ckan": 0,
+            "pct_with_photo_api": 81.6,
+            "pct_with_photo_ckan": 0.0
+          },
+          "status_notes": {
+            "in_api": 174,
+            "in_ckan_closure_reason": 135,
+            "pct_with_notes_api": 68.2,
+            "pct_with_closure_ckan": 52.9
+          }
+        },
+        "examples": [
+          {
+            "ticket_id": "101006598983",
+            "date": "2026-04-01",
+            "api_description": "There are multiple potholes on the crosswalk",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775748981:boston:production:xs26pjfqk1fhw5quksbe/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775748981:boston:production:xs26pjfqk1fhw5quksbe/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775063722/boston/production/z3fhzzlegozys1r2c6vs.jpg",
+            "api_status_notes": "Resolved. Patched.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": null,
+            "address": "Intersection Of Farrington Ave And Harvard Ave, Allston, Ma"
+          },
+          {
+            "ticket_id": "101006599317",
+            "date": "2026-04-01",
+            "api_description": "Large pothole, Edwardson St & Lewiston St.",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775572122:boston:production:n2kknlrmt6n7vxzspxgw/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775572122/boston/production/n2kknlrmt6n7vxzspxgw.jpg",
+            "api_status_notes": "Resolved. Potholes completed.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": null,
+            "address": "Intersection Of Edwardson St And Lewiston St, Hyde Park, Ma"
+          },
+          {
+            "ticket_id": "101006599100",
+            "date": "2026-04-01",
+            "api_description": "Thank you very much for addressing this concern 101006595867; however, there are still at least 4 big potholes remaining on W Huntington, between W Newton/Belvidere and the Mass Ave underpass, the worst being just before the underpass on the downhill slope. Thank you!",
+            "api_photo_url": null,
+            "api_status_notes": null,
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": null,
+            "address": "Intersection Of Massachusetts Ave And Huntington Ave, Boston, Ma"
+          },
+          {
+            "ticket_id": "101006599326",
+            "date": "2026-04-01",
+            "api_description": "Deep  Potholes Public Alley 301 near Pinckney Street in Beacon Hill | Where exactly on the pavement is the pothole: [On Roadway]  What is the approximate size of the pothole: [See picture on Images tab]",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775081735/boston/production/cghotar61p8npznq6jgm.jpg#spot=a857ad13-d52d-4bbc-9f97-8a0b1164153c",
+            "api_status_notes": "Case Resolved. Patched 4/3.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": null,
+            "address": "94 Pinckney St, Boston, Ma, 02108"
+          },
+          {
+            "ticket_id": "101006598951",
+            "date": "2026-04-01",
+            "api_description": "-- auto translated (en-US) -- Sink hole - picture doesn\u2019t do it justice. Looks like it\u2019s getting worse by the day!! -- original (en-US) -- Sink hole - picture doesn\u2019t do it justice. Looks like it\u2019s getting worse by the day!!",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_236//l_v1775497091:boston:production:f3k0hi9u5riy8tduk0hj/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_266/l_v1775497091:boston:production:f3k0hi9u5riy8tduk0hj/c_limit,h_748,w_236/fl_layer_apply,g_north_west,x_522/v1775062499/boston/production/p0uu6sjqb9avaovtpzh9.jpg",
+            "api_status_notes": "Resolved. This location was addressed.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": null,
+            "address": "10 Kittredge St, Roslindale, Ma, 02131"
+          }
+        ]
+      }
+    },
+    "dead-animals": {
+      "days": {
+        "2026-04-01": {
+          "counts": {
+            "open311": 18,
+            "ckan": 19,
+            "matched_by_id": 17,
+            "open311_only": 1,
+            "ckan_only": 2
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 17,
+              "in_ckan": 0,
+              "pct_with_desc_api": 100.0,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 5,
+              "in_ckan": 0,
+              "pct_with_photo_api": 29.4,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 17,
+              "in_ckan_closure_reason": 17,
+              "pct_with_notes_api": 100.0,
+              "pct_with_closure_ckan": 100.0
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006599212",
+              "date": "2026-04-01",
+              "api_description": "Dead bunny",
+              "api_photo_url": null,
+              "api_status_notes": "Duplicate of Existing Case. See case #694170027.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-01 20:57:31.553 Duplicate of Existing Case See case #694170027",
+              "address": "39 Terminal St, Charlestown, Ma, 02129"
+            },
+            {
+              "ticket_id": "101006599379",
+              "date": "2026-04-01",
+              "api_description": "Public Alley 426 behind 228 Marlborough St | Dead animal on sidewalk/roadway: [Sidewalk]  Type of animal: [Rodent]  Please explain: [rat]  Date when animal seen: [04/01/2026]  Time when animal seen: [19:05]",
+              "api_photo_url": null,
+              "api_status_notes": "Resolved.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 19:46:56 EDT 2026 Resolved",
+              "address": "Intersection Of Public Alley No. 425 And Public Alley No. 426 And Exeter St, Boston, Ma"
+            },
+            {
+              "ticket_id": "101006599238",
+              "date": "2026-04-01",
+              "api_description": "Dead woodpecker on sidewalk",
+              "api_photo_url": null,
+              "api_status_notes": "Resolved.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 18:32:00 EDT 2026 Resolved",
+              "address": "16 Devens St, Charlestown, Ma, 02129"
+            },
+            {
+              "ticket_id": "101006599271",
+              "date": "2026-04-01",
+              "api_description": "Dead animal on sidewalk/roadway: [Sidewalk]  Type of animal: [Bird]  Date when animal seen: [04/01/2026]  Time when animal seen: [17:00]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775080682:boston:production:wi9kxqkkfvjusqvrlfgn/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775080682/boston/production/wi9kxqkkfvjusqvrlfgn.jpg",
+              "api_status_notes": "Noted. Nothing found at this location.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 17:58:06 EDT 2026 Noted Nothing found at this location",
+              "address": "Intersection Of Taber St And Warren St, Roxbury, Ma"
+            },
+            {
+              "ticket_id": "101006599013",
+              "date": "2026-04-01",
+              "api_description": "Dead mouse along wall",
+              "api_photo_url": null,
+              "api_status_notes": "Resolved.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 15:31:15 EDT 2026 Resolved",
+              "address": "Intersection Of Lewis St And Commercial St, Boston, Ma"
+            }
+          ]
+        },
+        "2026-04-02": {
+          "counts": {
+            "open311": 7,
+            "ckan": 7,
+            "matched_by_id": 6,
+            "open311_only": 1,
+            "ckan_only": 1
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 6,
+              "in_ckan": 0,
+              "pct_with_desc_api": 100.0,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 3,
+              "in_ckan": 0,
+              "pct_with_photo_api": 50.0,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 6,
+              "in_ckan_closure_reason": 6,
+              "pct_with_notes_api": 100.0,
+              "pct_with_closure_ckan": 100.0
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006600266",
+              "date": "2026-04-02",
+              "api_description": "Dead animal",
+              "api_photo_url": null,
+              "api_status_notes": "Case Referred to External Agency. This location is under the jurisdiction of the Massachusetts Department of Conservation and Recreation and not the City of Boston. Mass DCR has received this complaint from us and will forward it to the appropriate district to review. Thank you.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-03 08:19:26.477 Case Referred to External Agency This location is under the jurisdiction of the Massachusetts Department of Conservation and Recreation and not the City of Boston. Mass DCR has received this complaint from us and will forward it to the appropriate district to review. Thank you.",
+              "address": "1275 Vfw Pkwy, West Roxbury, Ma, 02132"
+            },
+            {
+              "ticket_id": "101006599846",
+              "date": "2026-04-02",
+              "api_description": "Constituent states dead rat is in roadway | Dead animal on sidewalk/roadway: [Roadway]  Type of animal: [Rodent]  Please explain: [Constituent sates dead animal is a rat]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775144266:boston:production:r7lwlxkde70mz7hnc2ge/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775144266/boston/production/r7lwlxkde70mz7hnc2ge.jpg",
+              "api_status_notes": "Resolved.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 11:37:49 EDT 2026 Resolved",
+              "address": "70 Charles St, Boston, Ma, 02114"
+            },
+            {
+              "ticket_id": "101006599673",
+              "date": "2026-04-02",
+              "api_description": "Dead animal in street",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775136871:boston:production:c8lb9r6fvsplhgtwcqhv/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775136871/boston/production/c8lb9r6fvsplhgtwcqhv.jpg",
+              "api_status_notes": "Resolved.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 09:34:38 EDT 2026 Resolved",
+              "address": "207 Bunker Hill St, Charlestown, Ma, 02129"
+            },
+            {
+              "ticket_id": "101006599658",
+              "date": "2026-04-02",
+              "api_description": "road | Dead animal on sidewalk/roadway: [Roadway]  Type of animal: [Rodent]  Please explain: [rat]  Date when animal seen: [04/02/2026]  Time when animal seen: [08:44]",
+              "api_photo_url": null,
+              "api_status_notes": "Resolved. Removed.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 08:51:29 EDT 2026 Resolved Removed",
+              "address": "11 Everdean St, Dorchester, Ma, 02122"
+            },
+            {
+              "ticket_id": "101006599589",
+              "date": "2026-04-02",
+              "api_description": "Dead bunny on the street | Dead animal on sidewalk/roadway: [Roadway]  Type of animal: [Rodent]  Please explain: [bunny]  Date when animal seen: [04/02/2026]  Time when animal seen: [08:02]",
+              "api_photo_url": null,
+              "api_status_notes": "Resolved. Removed.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 08:24:42 EDT 2026 Resolved Removed",
+              "address": "34 Minot St, Dorchester, Ma, 02122"
+            }
+          ]
+        },
+        "2026-04-03": {
+          "counts": {
+            "open311": 15,
+            "ckan": 15,
+            "matched_by_id": 14,
+            "open311_only": 1,
+            "ckan_only": 1
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 14,
+              "in_ckan": 0,
+              "pct_with_desc_api": 100.0,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 5,
+              "in_ckan": 0,
+              "pct_with_photo_api": 35.7,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 14,
+              "in_ckan_closure_reason": 13,
+              "pct_with_notes_api": 100.0,
+              "pct_with_closure_ckan": 92.9
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006601416",
+              "date": "2026-04-03",
+              "api_description": "-- auto translated (en-US) -- Dead rat at Veteran\u2019s Park east Boston -- original (en-US) -- Dead rat at Veteran\u2019s Park east Boston",
+              "api_photo_url": null,
+              "api_status_notes": "Case Invalid. Unfortunately the city does not address this issue on private property.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of London St And William F Mc Clellan Hwy, East Boston, Ma"
+            },
+            {
+              "ticket_id": "101006601470",
+              "date": "2026-04-03",
+              "api_description": "Dead animal in road on Savin Hill Ave",
+              "api_photo_url": null,
+              "api_status_notes": "Resolved. Has been removed.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Fri Apr 03 21:00:51 EDT 2026 Resolved Has been removed",
+              "address": "320 Savin Hill Ave, Dorchester, Ma, 02125"
+            },
+            {
+              "ticket_id": "101006601359",
+              "date": "2026-04-03",
+              "api_description": "Dead rat on sidewalk",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775263270:boston:production:jz2ncfhroehvpoafw0i0/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775263270/boston/production/jz2ncfhroehvpoafw0i0.jpg",
+              "api_status_notes": "Resolved. Has been removed.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Fri Apr 03 20:41:16 EDT 2026 Resolved Has been removed",
+              "address": "40 Harvard Ave, Allston, Ma, 02134"
+            },
+            {
+              "ticket_id": "101006601132",
+              "date": "2026-04-03",
+              "api_description": "Dead rat",
+              "api_photo_url": null,
+              "api_status_notes": "Case Noted. Per PWD: This is on private property.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-03 16:18:26.23 Case Noted Per PWD: This is on private property",
+              "address": "58 Dustin St, Brighton, Ma, 02135"
+            },
+            {
+              "ticket_id": "101006600863",
+              "date": "2026-04-03",
+              "api_description": "Dead rat in bike lane",
+              "api_photo_url": null,
+              "api_status_notes": "Resolved. Has been removed.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Fri Apr 03 14:43:20 EDT 2026 Resolved Has been removed",
+              "address": "28 Westland Ave, Boston, Ma, 02115"
+            }
+          ]
+        }
+      },
+      "totals": {
+        "counts": {
+          "open311": 40,
+          "ckan": 41,
+          "matched_by_id": 39,
+          "open311_only": 1,
+          "ckan_only": 2
+        },
+        "stripped_fields": {
+          "description": {
+            "in_api": 39,
+            "in_ckan": 0,
+            "pct_with_desc_api": 100.0,
+            "pct_with_desc_ckan": 0.0
+          },
+          "photos": {
+            "in_api": 14,
+            "in_ckan": 0,
+            "pct_with_photo_api": 35.9,
+            "pct_with_photo_ckan": 0.0
+          },
+          "status_notes": {
+            "in_api": 39,
+            "in_ckan_closure_reason": 38,
+            "pct_with_notes_api": 100.0,
+            "pct_with_closure_ckan": 97.4
+          }
+        },
+        "examples": [
+          {
+            "ticket_id": "101006599212",
+            "date": "2026-04-01",
+            "api_description": "Dead bunny",
+            "api_photo_url": null,
+            "api_status_notes": "Duplicate of Existing Case. See case #694170027.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : 2026-04-01 20:57:31.553 Duplicate of Existing Case See case #694170027",
+            "address": "39 Terminal St, Charlestown, Ma, 02129"
+          },
+          {
+            "ticket_id": "101006599379",
+            "date": "2026-04-01",
+            "api_description": "Public Alley 426 behind 228 Marlborough St | Dead animal on sidewalk/roadway: [Sidewalk]  Type of animal: [Rodent]  Please explain: [rat]  Date when animal seen: [04/01/2026]  Time when animal seen: [19:05]",
+            "api_photo_url": null,
+            "api_status_notes": "Resolved.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 19:46:56 EDT 2026 Resolved",
+            "address": "Intersection Of Public Alley No. 425 And Public Alley No. 426 And Exeter St, Boston, Ma"
+          },
+          {
+            "ticket_id": "101006599238",
+            "date": "2026-04-01",
+            "api_description": "Dead woodpecker on sidewalk",
+            "api_photo_url": null,
+            "api_status_notes": "Resolved.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 18:32:00 EDT 2026 Resolved",
+            "address": "16 Devens St, Charlestown, Ma, 02129"
+          },
+          {
+            "ticket_id": "101006599271",
+            "date": "2026-04-01",
+            "api_description": "Dead animal on sidewalk/roadway: [Sidewalk]  Type of animal: [Bird]  Date when animal seen: [04/01/2026]  Time when animal seen: [17:00]",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775080682:boston:production:wi9kxqkkfvjusqvrlfgn/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775080682/boston/production/wi9kxqkkfvjusqvrlfgn.jpg",
+            "api_status_notes": "Noted. Nothing found at this location.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 17:58:06 EDT 2026 Noted Nothing found at this location",
+            "address": "Intersection Of Taber St And Warren St, Roxbury, Ma"
+          },
+          {
+            "ticket_id": "101006599013",
+            "date": "2026-04-01",
+            "api_description": "Dead mouse along wall",
+            "api_photo_url": null,
+            "api_status_notes": "Resolved.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : Wed Apr 01 15:31:15 EDT 2026 Resolved",
+            "address": "Intersection Of Lewis St And Commercial St, Boston, Ma"
+          }
+        ]
+      }
+    },
+    "sidewalks": {
+      "days": {
+        "2026-04-01": {
+          "counts": {
+            "open311": 18,
+            "ckan": 16,
+            "matched_by_id": 16,
+            "open311_only": 2,
+            "ckan_only": 0
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 15,
+              "in_ckan": 0,
+              "pct_with_desc_api": 93.8,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 11,
+              "in_ckan": 0,
+              "pct_with_photo_api": 68.8,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 6,
+              "in_ckan_closure_reason": 6,
+              "pct_with_notes_api": 37.5,
+              "pct_with_closure_ckan": 37.5
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006599324",
+              "date": "2026-04-01",
+              "api_description": "Sidewalk is badly broken- people aing tripping and falling",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775142425:boston:production:snmiigcl4iip6bymouic/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775142424/boston/production/py5nhmteyhnb7fjmwubv.jpg",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Washington St And Beech St And Walworth St, Roslindale, Ma"
+            },
+            {
+              "ticket_id": "101006599331",
+              "date": "2026-04-01",
+              "api_description": "Sidewalk in need of repair",
+              "api_photo_url": null,
+              "api_status_notes": "Case Noted. Please resubmit with picture.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-02 09:25:20.863 Case Noted Please resubmit with picture",
+              "address": "141 Malden St, Roxbury, Ma, 02118"
+            },
+            {
+              "ticket_id": "101006599034",
+              "date": "2026-04-01",
+              "api_description": "Road closed for construction. No police detail. Sidewalks ripped open, hazardous for pedestrians",
+              "api_photo_url": null,
+              "api_status_notes": "Resolved. Deroma is currently working on the sidewalks in the area.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 09:21:37 EDT 2026 Resolved Deroma is currently working on the sidewalks in the area",
+              "address": "16 Jacqueline Rd, West Roxbury, Ma, 02132"
+            },
+            {
+              "ticket_id": "101006599298",
+              "date": "2026-04-01",
+              "api_description": "Safety and accessibility concern regarding an active construction site in the Fenway area near Berklee College of Music. I am writing to report a safety and accessibility concern regarding this active construction site and how this construction has significantly impacted pedestrian pathway and students have reported it as an unsafe walking condition and inaccessible for everyone. It has no access for individuals with mobility needs. As a student leader at Berklee I am concerned that the current ",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775079300/boston/production/yvnhjapmh3tkoaoiqu4s.jpg#spot=8a070cbe-2b0d-49dd-a3eb-5cb78feea71a",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Ipswich St And Boylston St And Charlesgate, Boston, Ma"
+            },
+            {
+              "ticket_id": "101006599053",
+              "date": "2026-04-01",
+              "api_description": "Missing bricks",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775066470/boston/production/bccyjoruulmobglnzv6a.jpg#spot=0f7c532c-765c-4c53-a995-0742dc6f1b4a",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "17 Bond St, Roxbury, Ma, 02118"
+            }
+          ]
+        },
+        "2026-04-02": {
+          "counts": {
+            "open311": 16,
+            "ckan": 17,
+            "matched_by_id": 16,
+            "open311_only": 0,
+            "ckan_only": 1
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 16,
+              "in_ckan": 0,
+              "pct_with_desc_api": 100.0,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 15,
+              "in_ckan": 0,
+              "pct_with_photo_api": 93.8,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 4,
+              "in_ckan_closure_reason": 4,
+              "pct_with_notes_api": 25.0,
+              "pct_with_closure_ckan": 25.0
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006600024",
+              "date": "2026-04-02",
+              "api_description": "Handicap ramp at corner always flooded because of clogged drain at corner of Arlington and Boylston. There is a drain directly under this puddle that does nothing",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775151064/boston/production/udel8cyf6q9r1xygxgbr.jpg#spot=9cbdc52c-5810-404d-930a-c3c8bec647d9",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "330 334 Boylston St, Boston, Ma, 02116"
+            },
+            {
+              "ticket_id": "101006600009",
+              "date": "2026-04-02",
+              "api_description": "Constituent states the sidewalk in front of their business was damaged by previous plowing. Requesting repair. | Cause of damage: [Other]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775237475:boston:production:t75u6v7wxxtzhl3y9f4d/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775237474/boston/production/cb0cexwscpasooz2cha9.jpg",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "5330 Washington St, West Roxbury, Ma, 02132"
+            },
+            {
+              "ticket_id": "101006600030",
+              "date": "2026-04-02",
+              "api_description": "Broken sidewalk",
+              "api_photo_url": null,
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Quincefield St And Wendover St, Dorchester, Ma"
+            },
+            {
+              "ticket_id": "101006599997",
+              "date": "2026-04-02",
+              "api_description": "Sidewalk still awaiting repair",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775149651:boston:production:htteq93s4zfj4g33wfrj/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775149650/boston/production/ni49fygrlf3syqqk4huo.jpg",
+              "api_status_notes": "Case Noted. There is no restoration work during the winter moratorium.  When the moratorium is lifted, the sidewalk will be repaired by NGrid.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : 2026-04-03 07:50:02.35 Case Noted There is no restoration work during the winter moratorium.  When the moratorium is lifted  the sidewalk will be repaired by NGrid.",
+              "address": "43 E Concord St, Roxbury, Ma, 02118"
+            },
+            {
+              "ticket_id": "101006600068",
+              "date": "2026-04-02",
+              "api_description": "The constituent reports the sidewalk in front of the service location is partially cracked. The constituent also statesit is continuing to crack and posing a tripping hazard. The constituent 8s requesting assistance with this matter. | Cause of damage: [Normal deterioration]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_364,w_236//l_v1775216008:boston:production:fqsqirdymz4ab9xt0aem/c_limit,h_364,w_236/fl_layer_apply,g_north_west,x_266/l_v1775216009:boston:production:jwewjmqizzmha5mju83m/c_limit,h_364,w_236/fl_layer_apply,g_north_west,x_522/l_v1775216009:boston:production:jwewjmqizzmha5mju83m/c_limit,h_364,w_236/fl_layer_apply,g_north_west,x_0,y_394/l_v1775216010:boston:production:cx9nu1qo8jbvx5brjmcc/c_limit,h_364,w_236/fl_layer_apply,g_north_west,x_266,y_394/l_v1775216010:boston:production:cx9nu1qo8jbvx5brjmcc/c_limit,h_364,w_236/fl_layer_apply,g_north_west,x_522,y_394/v1775216008/boston/production/fqsqirdymz4ab9xt0aem.jpg",
+              "api_status_notes": "Resolved. Made safe with hot patch by bpw and contractor.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": "Case Closed. Closed date : Fri Apr 03 07:33:34 EDT 2026 Resolved Made safe with hot patch by bpw and contractor",
+              "address": "78 Westchester Rd, Jamaica Plain, Ma, 02130"
+            }
+          ]
+        },
+        "2026-04-03": {
+          "counts": {
+            "open311": 28,
+            "ckan": 28,
+            "matched_by_id": 27,
+            "open311_only": 1,
+            "ckan_only": 1
+          },
+          "stripped_fields": {
+            "description": {
+              "in_api": 26,
+              "in_ckan": 0,
+              "pct_with_desc_api": 96.3,
+              "pct_with_desc_ckan": 0.0
+            },
+            "photos": {
+              "in_api": 22,
+              "in_ckan": 0,
+              "pct_with_photo_api": 81.5,
+              "pct_with_photo_ckan": 0.0
+            },
+            "status_notes": {
+              "in_api": 6,
+              "in_ckan_closure_reason": 1,
+              "pct_with_notes_api": 22.2,
+              "pct_with_closure_ckan": 3.7
+            }
+          },
+          "examples": [
+            {
+              "ticket_id": "101006601092",
+              "date": "2026-04-03",
+              "api_description": "Broken sidewalk in front of Nathan Hale School at 51 Cedar Street. Please replace with concrete not asphalt.",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775239200/boston/production/rairtpuwpplzflgg7pcl.jpg#spot=b2ccdcb1-6394-491d-8a50-63d2d0b54fff",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "51 Cedar St, Roxbury, Ma, 02119"
+            },
+            {
+              "ticket_id": "101006601427",
+              "date": "2026-04-03",
+              "api_description": "Raised water shot off",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775256923/boston/production/mywhdm4sqidrq4gxdqnd.jpg#spot=19d4ccd3-fcbb-436d-aa8c-7cf32f3754f8",
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "6 Presentation Rd, Brighton, Ma, 02135"
+            },
+            {
+              "ticket_id": "101006601038",
+              "date": "2026-04-03",
+              "api_description": "Handicap access ramp \"destroyed\". Constituent describes the entire curb as missing. Currently a large hole and puddle. | Cause of damage: [Normal deterioration]  Sidewalk material: [Concrete]",
+              "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775480565:boston:production:htvk4g9vorxvurfmxgtl/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775480565/boston/production/htvk4g9vorxvurfmxgtl.jpg",
+              "api_status_notes": "Resolved.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "Intersection Of Bragdon St And Amory St, Roxbury, Ma"
+            },
+            {
+              "ticket_id": "101006601409",
+              "date": "2026-04-03",
+              "api_description": "170 Newberry st  sidewalk broken. I observed at least 12 people trip in ten minutes. How about less trump and more actual services. You are going to have someone seriously injured.",
+              "api_photo_url": null,
+              "api_status_notes": "Noted. Please attach photo.",
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "170 Newbury St, Boston, Ma, 02116"
+            },
+            {
+              "ticket_id": "101006600981",
+              "date": "2026-04-03",
+              "api_description": "Constituent states slabs in front of driveway are lifting at handicap veterans home. Daroma is out now repairing nearby slabs. Was told if inspector comes by and marks it they can do this today while they are out here. | Cause of damage: [Normal deterioration]",
+              "api_photo_url": null,
+              "api_status_notes": null,
+              "ckan_has_description": false,
+              "ckan_submitted_photo": null,
+              "ckan_closure_reason": null,
+              "address": "203 Wren St, West Roxbury, Ma, 02132"
+            }
+          ]
+        }
+      },
+      "totals": {
+        "counts": {
+          "open311": 62,
+          "ckan": 61,
+          "matched_by_id": 60,
+          "open311_only": 2,
+          "ckan_only": 1
+        },
+        "stripped_fields": {
+          "description": {
+            "in_api": 58,
+            "in_ckan": 0,
+            "pct_with_desc_api": 96.7,
+            "pct_with_desc_ckan": 0.0
+          },
+          "photos": {
+            "in_api": 49,
+            "in_ckan": 0,
+            "pct_with_photo_api": 81.7,
+            "pct_with_photo_ckan": 0.0
+          },
+          "status_notes": {
+            "in_api": 16,
+            "in_ckan_closure_reason": 11,
+            "pct_with_notes_api": 26.7,
+            "pct_with_closure_ckan": 18.3
+          }
+        },
+        "examples": [
+          {
+            "ticket_id": "101006599324",
+            "date": "2026-04-01",
+            "api_description": "Sidewalk is badly broken- people aing tripping and falling",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/c_limit,h_748,w_364//l_v1775142425:boston:production:snmiigcl4iip6bymouic/c_limit,h_748,w_364/fl_layer_apply,g_north_west,x_394/v1775142424/boston/production/py5nhmteyhnb7fjmwubv.jpg",
+            "api_status_notes": null,
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": null,
+            "address": "Intersection Of Washington St And Beech St And Walworth St, Roslindale, Ma"
+          },
+          {
+            "ticket_id": "101006599331",
+            "date": "2026-04-01",
+            "api_description": "Sidewalk in need of repair",
+            "api_photo_url": null,
+            "api_status_notes": "Case Noted. Please resubmit with picture.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : 2026-04-02 09:25:20.863 Case Noted Please resubmit with picture",
+            "address": "141 Malden St, Roxbury, Ma, 02118"
+          },
+          {
+            "ticket_id": "101006599034",
+            "date": "2026-04-01",
+            "api_description": "Road closed for construction. No police detail. Sidewalks ripped open, hazardous for pedestrians",
+            "api_photo_url": null,
+            "api_status_notes": "Resolved. Deroma is currently working on the sidewalks in the area.",
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": "Case Closed. Closed date : Thu Apr 02 09:21:37 EDT 2026 Resolved Deroma is currently working on the sidewalks in the area",
+            "address": "16 Jacqueline Rd, West Roxbury, Ma, 02132"
+          },
+          {
+            "ticket_id": "101006599298",
+            "date": "2026-04-01",
+            "api_description": "Safety and accessibility concern regarding an active construction site in the Fenway area near Berklee College of Music. I am writing to report a safety and accessibility concern regarding this active construction site and how this construction has significantly impacted pedestrian pathway and students have reported it as an unsafe walking condition and inaccessible for everyone. It has no access for individuals with mobility needs. As a student leader at Berklee I am concerned that the current ",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775079300/boston/production/yvnhjapmh3tkoaoiqu4s.jpg#spot=8a070cbe-2b0d-49dd-a3eb-5cb78feea71a",
+            "api_status_notes": null,
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": null,
+            "address": "Intersection Of Ipswich St And Boylston St And Charlesgate, Boston, Ma"
+          },
+          {
+            "ticket_id": "101006599053",
+            "date": "2026-04-01",
+            "api_description": "Missing bricks",
+            "api_photo_url": "https://spot-boston-res.cloudinary.com/image/upload/v1775066470/boston/production/bccyjoruulmobglnzv6a.jpg#spot=0f7c532c-765c-4c53-a995-0742dc6f1b4a",
+            "api_status_notes": null,
+            "ckan_has_description": false,
+            "ckan_submitted_photo": null,
+            "ckan_closure_reason": null,
+            "address": "17 Bond St, Roxbury, Ma, 02118"
+          }
+        ]
+      }
+    }
+  }
+}
