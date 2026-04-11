@@ -16,7 +16,7 @@ import urllib.request
 from datetime import UTC, datetime
 from typing import Any
 
-from shapely.geometry import Point, shape
+from shapely.geometry import Point, mapping, shape
 from shapely.prepared import prep
 
 from pipeline import storage
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 CACHE_TTL_DAYS = 90
 CACHE_KEY = "districts/boundaries.json"
+DISPLAY_KEY = "districts/boundaries_display.json"
 ASSIGNMENTS_KEY = "districts/assignments.json"
 
 # ArcGIS FeatureServer endpoints (query for all features as GeoJSON)
@@ -95,6 +96,9 @@ def _load_or_fetch_boundaries() -> dict[str, Any]:
             age = (datetime.now(tz=UTC) - datetime.fromisoformat(fetched_at)).days
             if age < CACHE_TTL_DAYS:
                 logger.info("Using cached district boundaries (%d days old)", age)
+                # Ensure display boundaries exist
+                if not storage.read_json(DISPLAY_KEY):
+                    _write_display_boundaries(cached)
                 return cached  # type: ignore[no-any-return]
 
     logger.info("Fetching fresh district boundaries from ArcGIS...")
@@ -132,7 +136,38 @@ def _load_or_fetch_boundaries() -> dict[str, Any]:
         storage.write_json(CACHE_KEY, result)
     except Exception:
         logger.debug("Could not cache boundaries to S3 (local dev?)")
+
+    _write_display_boundaries(result)
     return result
+
+
+def _simplify_geometry(geom_dict: dict[str, Any], tolerance: float = 0.002) -> dict[str, Any]:
+    """Simplify a GeoJSON geometry for display purposes."""
+    geom = shape(geom_dict)
+    simplified = geom.simplify(tolerance, preserve_topology=True)
+    result: dict[str, Any] = dict(mapping(simplified))
+    return result
+
+
+def _write_display_boundaries(data: dict[str, Any]) -> None:
+    """Write simplified boundary GeoJSON for frontend map display."""
+    display: dict[str, Any] = {}
+    for key in ("council", "police", "state_rep", "state_senate"):
+        features = data.get(key, {}).get("features", [])
+        display[key] = [
+            {
+                "id": f["id"],
+                "geometry": _simplify_geometry(f["geometry"]),
+            }
+            for f in features
+            if f.get("geometry")
+        ]
+    try:
+        storage.write_json(DISPLAY_KEY, display)
+        size = len(json.dumps(display))
+        logger.info("Wrote display boundaries: %d KB", size // 1024)
+    except Exception:
+        logger.debug("Could not write display boundaries to S3")
 
 
 class DistrictLookup:

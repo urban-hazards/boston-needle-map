@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import type { DistrictBoundaries } from "../lib/bucket"
 import type { MarkerData } from "../lib/types"
 
 declare const L: typeof import("leaflet")
@@ -24,6 +25,7 @@ interface HeatMapProps {
 	stateRepLabels: string[]
 	stateSenateDistricts: string[]
 	stateSenateLabels: string[]
+	districtBoundaries: DistrictBoundaries
 }
 
 const NEEDLE_GRADIENT: Record<number, string> = {
@@ -73,6 +75,8 @@ const MONTHS = [
 	"November",
 	"December",
 ]
+
+type BoundaryLayer = "council" | "police" | "state_rep" | "state_senate"
 
 interface DistrictFilters {
 	council?: number
@@ -126,6 +130,7 @@ export default function HeatMap({
 	stateRepLabels,
 	stateSenateDistricts,
 	stateSenateLabels,
+	districtBoundaries,
 }: HeatMapProps) {
 	const mapRef = useRef<HTMLDivElement>(null)
 	const mapInstance = useRef<L.Map | null>(null)
@@ -135,6 +140,7 @@ export default function HeatMap({
 	const markerGroupRef = useRef<L.LayerGroup | null>(null)
 	const encampmentMarkerGroupRef = useRef<L.LayerGroup | null>(null)
 	const wasteMarkerGroupRef = useRef<L.LayerGroup | null>(null)
+	const boundaryLayerRef = useRef<L.GeoJSON | null>(null)
 
 	const defaultYear = String(years[years.length - 1] || "all")
 	const [selYear, setSelYear] = useState(defaultYear)
@@ -164,6 +170,7 @@ export default function HeatMap({
 	const [isMobile, setIsMobile] = useState(false)
 	const [filterOpen, setFilterOpen] = useState(false)
 	const [showPins, setShowPins] = useState(true)
+	const [showBoundaries, setShowBoundaries] = useState<BoundaryLayer | null>(null)
 
 	const activeYears =
 		dataLayer === "encampments" ? encampmentYears : dataLayer === "waste" ? wasteYears : years
@@ -396,6 +403,75 @@ export default function HeatMap({
 			map.addLayer(wasteMarkerGroupRef.current)
 		}
 	}
+
+	// Draw district boundary outlines on the map
+	function drawBoundaries(
+		map: L.Map,
+		layer: BoundaryLayer | null,
+		selectedIdx: number,
+		districts: string[],
+	) {
+		if (boundaryLayerRef.current) {
+			map.removeLayer(boundaryLayerRef.current)
+			boundaryLayerRef.current = null
+		}
+		if (!layer || !districtBoundaries[layer]) return
+
+		const features = districtBoundaries[layer]
+		if (!features || features.length === 0) return
+
+		// If a specific district is selected, only show that one with a slightly stronger style
+		// Otherwise show all boundaries for the toggled layer
+		const selectedDistId = selectedIdx > 0 ? districts[selectedIdx - 1] : null
+
+		const geojson: GeoJSON.FeatureCollection = {
+			type: "FeatureCollection",
+			features: features
+				.filter((f) => (selectedDistId ? f.id === selectedDistId : true))
+				.map((f) => ({
+					type: "Feature" as const,
+					properties: { id: f.id, selected: f.id === selectedDistId },
+					geometry: f.geometry,
+				})),
+		}
+
+		boundaryLayerRef.current = L.geoJSON(geojson, {
+			style: (feature) => ({
+				color: feature?.properties?.selected ? "#e85a1b" : "#555",
+				weight: feature?.properties?.selected ? 2.5 : 1.5,
+				opacity: feature?.properties?.selected ? 0.7 : 0.35,
+				fillColor: feature?.properties?.selected ? "#e85a1b" : "transparent",
+				fillOpacity: feature?.properties?.selected ? 0.05 : 0,
+				dashArray: feature?.properties?.selected ? undefined : "4 4",
+			}),
+		}).addTo(map)
+	}
+
+	// Update boundary outlines when toggle or selected district changes
+	// biome-ignore lint/correctness/useExhaustiveDependencies: boundary drawing depends on selection state
+	useEffect(() => {
+		if (!ready || !mapInstance.current) return
+		const map = mapInstance.current
+
+		// Determine which district is selected for the active boundary layer
+		let selectedIdx = 0
+		let districts: string[] = []
+		if (showBoundaries === "council") {
+			selectedIdx = selCouncil
+			districts = councilDistricts
+		} else if (showBoundaries === "police") {
+			selectedIdx = selPolice
+			districts = policeDistricts
+		} else if (showBoundaries === "state_rep") {
+			selectedIdx = selRep
+			districts = stateRepDistricts
+		} else if (showBoundaries === "state_senate") {
+			selectedIdx = selSenate
+			districts = stateSenateDistricts
+		}
+
+		drawBoundaries(map, showBoundaries, selectedIdx, districts)
+	}, [showBoundaries, selCouncil, selPolice, selRep, selSenate, ready])
 
 	// Toggle marker pins on/off
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional dependency on showPins
@@ -645,6 +721,27 @@ export default function HeatMap({
 							Show pins when zoomed in
 						</label>
 
+						{Object.keys(districtBoundaries).length > 0 && (
+							<div style={{ marginBottom: 10 }}>
+								<div style={filterLabelStyle}>District Outlines</div>
+								<select
+									value={showBoundaries ?? ""}
+									onChange={(e) =>
+										setShowBoundaries(e.target.value ? (e.target.value as BoundaryLayer) : null)
+									}
+									style={selectStyle}
+								>
+									<option value="">Off</option>
+									{districtBoundaries.council && <option value="council">City Council</option>}
+									{districtBoundaries.police && <option value="police">Police</option>}
+									{districtBoundaries.state_rep && <option value="state_rep">State Rep</option>}
+									{districtBoundaries.state_senate && (
+										<option value="state_senate">State Senate</option>
+									)}
+								</select>
+							</div>
+						)}
+
 						{dataLayer === "waste" && (
 							<div style={{ marginBottom: 8 }}>
 								<div style={filterLabelStyle}>Source</div>
@@ -708,7 +805,11 @@ export default function HeatMap({
 								<div style={filterLabelStyle}>Council District</div>
 								<select
 									value={selCouncil}
-									onChange={(e) => setSelCouncil(Number(e.target.value))}
+									onChange={(e) => {
+										const v = Number(e.target.value)
+										setSelCouncil(v)
+										if (v > 0) setShowBoundaries("council")
+									}}
 									style={selectStyle}
 								>
 									<option value={0}>All Districts</option>
@@ -726,7 +827,11 @@ export default function HeatMap({
 								<div style={filterLabelStyle}>Police District</div>
 								<select
 									value={selPolice}
-									onChange={(e) => setSelPolice(Number(e.target.value))}
+									onChange={(e) => {
+										const v = Number(e.target.value)
+										setSelPolice(v)
+										if (v > 0) setShowBoundaries("police")
+									}}
 									style={selectStyle}
 								>
 									<option value={0}>All Districts</option>
@@ -744,7 +849,11 @@ export default function HeatMap({
 								<div style={filterLabelStyle}>State Rep</div>
 								<select
 									value={selRep}
-									onChange={(e) => setSelRep(Number(e.target.value))}
+									onChange={(e) => {
+										const v = Number(e.target.value)
+										setSelRep(v)
+										if (v > 0) setShowBoundaries("state_rep")
+									}}
 									style={selectStyle}
 								>
 									<option value={0}>All Districts</option>
@@ -762,7 +871,11 @@ export default function HeatMap({
 								<div style={filterLabelStyle}>State Senate</div>
 								<select
 									value={selSenate}
-									onChange={(e) => setSelSenate(Number(e.target.value))}
+									onChange={(e) => {
+										const v = Number(e.target.value)
+										setSelSenate(v)
+										if (v > 0) setShowBoundaries("state_senate")
+									}}
 									style={selectStyle}
 								>
 									<option value={0}>All Districts</option>

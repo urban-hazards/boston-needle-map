@@ -99,6 +99,24 @@ export async function fetchPoints(dataset = "needles"): Promise<number[][]> {
 	return full.points
 }
 
+export interface DistrictBoundary {
+	id: string
+	geometry: GeoJSON.Geometry
+}
+
+export type DistrictBoundaries = Record<string, DistrictBoundary[]>
+
+export async function fetchDistrictBoundaries(): Promise<DistrictBoundaries> {
+	if (USE_S3) {
+		try {
+			return await readJson<DistrictBoundaries>("districts/boundaries_display.json")
+		} catch {
+			return {}
+		}
+	}
+	return {}
+}
+
 export async function fetchMarkers(dataset = "needles"): Promise<MarkerData[]> {
 	if (USE_S3) return readJson<MarkerData[]>(`${dataset}/markers.json`)
 	const full = await fetchFullStats(dataset)

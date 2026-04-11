@@ -8,7 +8,7 @@ import NeighborhoodTable from "../components/NeighborhoodTable"
 import StatsOverview from "../components/StatsOverview.astro"
 import ZipCodeList from "../components/ZipCodeList.astro"
 import BaseLayout from "../layouts/BaseLayout.astro"
-import { fetchMarkers, fetchPageStats, fetchPoints } from "../lib/bucket"
+import { fetchDistrictBoundaries, fetchMarkers, fetchPageStats, fetchPoints } from "../lib/bucket"
 import { formatNumber } from "../lib/seo"
 import "../styles/global.css"
 
@@ -22,6 +22,7 @@ const [
 	needleMarkers,
 	encampmentMarkers,
 	wasteMarkers,
+	districtBoundaries,
 ] = await Promise.all([
 	fetchPageStats("needles"),
 	fetchPageStats("encampments"),
@@ -32,6 +33,7 @@ const [
 	fetchMarkers("needles"),
 	fetchMarkers("encampments"),
 	fetchMarkers("waste"),
+	fetchDistrictBoundaries(),
 ])
 
 function addSlugs(hoods: typeof stats.hoods) {
@@ -109,6 +111,7 @@ const description = `Interactive heatmap and analysis of ${formatNumber(stats.to
 			stateRepLabels={stats.state_rep_district_labels ?? stats.state_rep_districts ?? []}
 			stateSenateDistricts={stats.state_senate_districts ?? []}
 			stateSenateLabels={stats.state_senate_district_labels ?? stats.state_senate_districts ?? []}
+			districtBoundaries={districtBoundaries}
 		/>
 
 		<section class="section" aria-label="Trend charts">
