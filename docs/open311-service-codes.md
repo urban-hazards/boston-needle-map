@@ -138,6 +138,28 @@ that were never reclassified. Need to study:
 - Are they eventually acted on through a different path?
 - What patterns distinguish trapped-in-Other from properly-routed?
 
+### Peak hour analysis: Is 12 AM real or a batch artifact?
+
+For needle/sharps data, the peak hour is **12 AM Eastern** — verified real, not
+a data artifact. Zero records have fake `T00:00:00` timestamps across all years
+(2015-2024). The overnight distribution (9 PM → 3 AM) matches expected patterns
+for public IV drug activity.
+
+**However:** need to investigate whether overnight tickets are real-time citizen
+reports or batch-entered by city contractors/BPHC. Check the `source` field
+breakdown by hour:
+- If 12 AM tickets are "Citizens Connect App" → real-time reports, pattern is genuine
+- If 12 AM tickets are "Employee Generated" → could be morning crew logging overnight work with backdated timestamps
+- Look for recurring daily patterns — a contractor running daily sweeps would create a signature in the source + hour + day-of-week fields
+
+**CKAN timestamps are real UTC times** with no midnight-zeroing issue. The
+pipeline correctly converts to Eastern. Earlier years (2015+) also have real
+times. No repair needed.
+
+**For the public:** We should explain data provenance so users can verify our
+methodology. Eventually: drill-down from any stat to the raw records that
+produced it, showing CKAN row IDs and Open311 request IDs.
+
 ### Graffiti: Two departments, one problem
 
 Graffiti Removal (Property Management, 2,501/year) and PWD Graffiti (Public
