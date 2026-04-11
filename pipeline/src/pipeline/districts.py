@@ -40,22 +40,19 @@ ENDPOINTS: dict[str, dict[str, str | None]] = {
         "name_field": "Councilor",
     },
     "police": {
-        "url": "https://gisportal.boston.gov/arcgis/rest/services/"
-        "PublicSafety/OpenData/MapServer/5/query",
+        "url": "https://gisportal.boston.gov/arcgis/rest/services/PublicSafety/OpenData/MapServer/5/query",
         "fields": "DISTRICT",
         "id_field": "DISTRICT",
         "name_field": None,
     },
     "state_rep": {
-        "url": "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/"
-        "AGOL/House2021/FeatureServer/1/query",
+        "url": "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/House2021/FeatureServer/1/query",
         "fields": "REP_DIST,REP",
         "id_field": "REP_DIST",
         "name_field": "REP",
     },
     "state_senate": {
-        "url": "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/"
-        "AGOL/Senate2021/FeatureServer/1/query",
+        "url": "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/Senate2021/FeatureServer/1/query",
         "fields": "SEN_DIST,SENATOR",
         "id_field": "SEN_DIST",
         "name_field": "SENATOR",
