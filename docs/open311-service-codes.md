@@ -154,7 +154,21 @@ and logs what accumulated overnight. The 12 AM peak may reflect:
 - Employee batch-entry of overnight accumulation
 - Some mix of both
 
-**To investigate:** Break down tickets by `source` field × hour:
+**Investigated (2024 data, 10,737 Needle Pickup tickets):**
+
+Source breakdown: Citizens Connect App 80%, Constituent Call 19%, Employee
+Generated 0.05% (5 tickets). The midnight peak is overwhelmingly real-time
+citizen app reports, not batch entry. BPHC/SHARPS team does NOT create tickets
+in bulk — they respond to citizen-created ones and log closures with syringe
+counts and worker initials (e.g. "78 syringes recovered 13dt", "recovered by
+jg"). Only 5 employee-generated tickets all year.
+
+High-count tickets (20+ syringes, n=10): 6/10 on Mondays (weekend
+accumulation), all at expected hotspots (Mass Ave, South End, BMC area). No
+round-minute clustering, confirming real-time reporting not batch entry.
+
+**Still worth investigating:** Break down tickets by `source` field × hour to
+see if constituent-call tickets have different hour patterns than app tickets:
 - "Citizens Connect App" at midnight → real-time reports from people who are out
 - "Employee Generated" at midnight → batch entry, timestamp is logging time not observation time
 - "Constituent Call" at midnight → unlikely, call center hours matter
