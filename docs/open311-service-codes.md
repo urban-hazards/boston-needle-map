@@ -140,25 +140,31 @@ that were never reclassified. Need to study:
 
 ### Peak hour analysis: Is 12 AM real or a batch artifact?
 
-For needle/sharps data, the peak hour is **12 AM Eastern** — verified real, not
-a data artifact. Zero records have fake `T00:00:00` timestamps across all years
-(2015-2024). The overnight distribution (9 PM → 3 AM) matches expected patterns
-for public IV drug activity.
+For needle/sharps data, the peak hour is **12 AM Eastern** — verified real
+timestamps, not a data artifact. Zero records have fake `T00:00:00` across all
+years (2015-2024). CKAN timestamps are real UTC times; the pipeline correctly
+converts to Eastern.
 
-**However:** need to investigate whether overnight tickets are real-time citizen
-reports or batch-entered by city contractors/BPHC. Check the `source` field
-breakdown by hour:
-- If 12 AM tickets are "Citizens Connect App" → real-time reports, pattern is genuine
-- If 12 AM tickets are "Employee Generated" → could be morning crew logging overnight work with backdated timestamps
-- Look for recurring daily patterns — a contractor running daily sweeps would create a signature in the source + hour + day-of-week fields
+**Critical caveat: ticket timestamps measure when people REPORT, not when the
+activity occurs.** Needle use likely peaks afternoon through evening, but
+reporting lags by hours. Someone walks past needles on their morning commute
+and files at 8 AM for something left at 2 AM. A city worker starts their shift
+and logs what accumulated overnight. The 12 AM peak may reflect:
+- Late-night pedestrians (bar/nightlife crowd) reporting what they see in real-time
+- Employee batch-entry of overnight accumulation
+- Some mix of both
 
-**CKAN timestamps are real UTC times** with no midnight-zeroing issue. The
-pipeline correctly converts to Eastern. Earlier years (2015+) also have real
-times. No repair needed.
+**To investigate:** Break down tickets by `source` field × hour:
+- "Citizens Connect App" at midnight → real-time reports from people who are out
+- "Employee Generated" at midnight → batch entry, timestamp is logging time not observation time
+- "Constituent Call" at midnight → unlikely, call center hours matter
+- Look for recurring daily spikes at shift-change times (7 AM, 3 PM) which would indicate crew logging patterns
+- Check if "Employee Generated" tickets cluster at round hours (:00, :30) which would suggest manual batch entry vs real-time
 
-**For the public:** We should explain data provenance so users can verify our
-methodology. Eventually: drill-down from any stat to the raw records that
-produced it, showing CKAN row IDs and Open311 request IDs.
+**For the public:** The site should make clear that hourly charts show
+*reporting patterns*, not *activity patterns*. Eventually: drill-down from any
+stat to the raw records that produced it, showing CKAN row IDs and Open311
+request IDs so users can verify methodology.
 
 ### Graffiti: Two departments, one problem
 
