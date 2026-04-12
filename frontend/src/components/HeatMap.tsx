@@ -172,6 +172,10 @@ export default function HeatMap({
 	const [showPins, setShowPins] = useState(true)
 	const [showBoundaries, setShowBoundaries] = useState<BoundaryLayer | null>(null)
 
+	// Time scrubber state
+	const [isPlaying, setIsPlaying] = useState(false)
+	const playIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
 	const activeYears =
 		dataLayer === "encampments" ? encampmentYears : dataLayer === "waste" ? wasteYears : years
 
@@ -196,6 +200,76 @@ export default function HeatMap({
 		}
 		return s
 	}, [activePoints, selYear])
+
+	// Build sorted timeline of all year-month pairs for scrubber
+	const timeline = useMemo(() => {
+		const pairs = new Set<string>()
+		for (const [, , yr, mo] of activePoints) {
+			pairs.add(`${yr}-${String(mo).padStart(2, "0")}`)
+		}
+		return [...pairs].sort().map((key) => ({
+			year: Number(key.slice(0, 4)),
+			month: Number(key.slice(5)),
+			key,
+		}))
+	}, [activePoints])
+
+	// Current timeline index based on selYear/selMonth
+	const timelineIndex = useMemo(() => {
+		if (selYear === "all" && selMonth === 0) return -1 // "all" state
+		const target = selYear === "all" ? "" : `${selYear}-${String(selMonth || 1).padStart(2, "0")}`
+		return timeline.findIndex((t) => t.key === target)
+	}, [timeline, selYear, selMonth])
+
+	// Cleanup play interval on unmount
+	useEffect(() => {
+		return () => {
+			if (playIntervalRef.current) clearInterval(playIntervalRef.current)
+		}
+	}, [])
+
+	// Play/pause animation
+	function togglePlay() {
+		if (isPlaying) {
+			if (playIntervalRef.current) clearInterval(playIntervalRef.current)
+			playIntervalRef.current = null
+			setIsPlaying(false)
+			return
+		}
+		if (timeline.length === 0) return
+		setIsPlaying(true)
+		let idx = timelineIndex >= 0 ? timelineIndex : 0
+		const advance = () => {
+			idx = (idx + 1) % timeline.length
+			const t = timeline[idx]
+			if (t) {
+				setSelYear(String(t.year))
+				setSelMonth(t.month)
+			}
+			if (idx === timeline.length - 1) {
+				if (playIntervalRef.current) clearInterval(playIntervalRef.current)
+				playIntervalRef.current = null
+				setIsPlaying(false)
+			}
+		}
+		advance()
+		playIntervalRef.current = setInterval(advance, 800)
+	}
+
+	function scrubTo(idx: number) {
+		if (idx < 0) {
+			setSelYear("all")
+			setSelMonth(0)
+		} else if (timeline[idx]) {
+			setSelYear(String(timeline[idx].year))
+			setSelMonth(timeline[idx].month)
+		}
+		if (isPlaying) {
+			if (playIntervalRef.current) clearInterval(playIntervalRef.current)
+			playIntervalRef.current = null
+			setIsPlaying(false)
+		}
+	}
 
 	// Reset month if current selection has no data
 	useEffect(() => {
@@ -246,12 +320,12 @@ export default function HeatMap({
 
 			// Both heat layers on by default, filtered to latest year
 			const needleBinned = filterPoints(needlePoints, defaultYear, 0)
-			const needleLayer = createHeatLayer(needleBinned, NEEDLE_GRADIENT)
+			const needleLayer = createHeatLayer(needleBinned, NEEDLE_GRADIENT, 13)
 			needleLayer.addTo(map)
 			heatLayerRef.current = needleLayer
 
 			const encampmentBinned = filterPoints(encampmentPoints, defaultYear, 0)
-			const encampmentLayer = createHeatLayer(encampmentBinned, ENCAMPMENT_GRADIENT)
+			const encampmentLayer = createHeatLayer(encampmentBinned, ENCAMPMENT_GRADIENT, 13)
 			encampmentLayer.addTo(map)
 			encampmentHeatLayerRef.current = encampmentLayer
 
@@ -281,8 +355,61 @@ export default function HeatMap({
 		if (wasteMarkerGroupRef.current) map.removeLayer(wasteMarkerGroupRef.current)
 	}
 
+	const lastZoomRef = useRef(13)
+
 	function handleZoom(map: L.Map) {
 		const zoom = map.getZoom()
+
+		// Rebuild heat layers when zoom crosses a threshold
+		const prevParams = getHeatParams(lastZoomRef.current)
+		const newParams = getHeatParams(zoom)
+		if (prevParams.radius !== newParams.radius) {
+			const df: DistrictFilters = {
+				council: selCouncilRef.current,
+				police: selPoliceRef.current,
+				rep: selRepRef.current,
+				senate: selSenateRef.current,
+			}
+			const layer = dataLayerRef.current
+			if ((layer === "needles" || layer === "both") && heatLayerRef.current) {
+				map.removeLayer(heatLayerRef.current)
+				const pts = filterPoints(
+					needlePoints,
+					selYearRef.current,
+					selMonthRef.current,
+					undefined,
+					df,
+				)
+				heatLayerRef.current = createHeatLayer(pts, NEEDLE_GRADIENT, zoom)
+				heatLayerRef.current.addTo(map)
+			}
+			if ((layer === "encampments" || layer === "both") && encampmentHeatLayerRef.current) {
+				map.removeLayer(encampmentHeatLayerRef.current)
+				const pts = filterPoints(
+					encampmentPoints,
+					selYearRef.current,
+					selMonthRef.current,
+					undefined,
+					df,
+				)
+				encampmentHeatLayerRef.current = createHeatLayer(pts, ENCAMPMENT_GRADIENT, zoom)
+				encampmentHeatLayerRef.current.addTo(map)
+			}
+			if (layer === "waste" && wasteHeatLayerRef.current) {
+				map.removeLayer(wasteHeatLayerRef.current)
+				const pts = filterPoints(
+					wastePoints,
+					selYearRef.current,
+					selMonthRef.current,
+					wasteSourceRef.current,
+					df,
+				)
+				wasteHeatLayerRef.current = createHeatLayer(pts, WASTE_GRADIENT, zoom)
+				wasteHeatLayerRef.current.addTo(map)
+			}
+		}
+		lastZoomRef.current = zoom
+
 		if (zoom >= 15 && showPins) {
 			rebuildMarkers(map)
 		} else {
@@ -521,7 +648,7 @@ export default function HeatMap({
 		// Add appropriate layers
 		if (dataLayer === "needles" || dataLayer === "both") {
 			const pts = filterPoints(needlePoints, defaultYear, 0, undefined, df)
-			const layer = createHeatLayer(pts, NEEDLE_GRADIENT)
+			const layer = createHeatLayer(pts, NEEDLE_GRADIENT, map.getZoom())
 			layer.addTo(map)
 			heatLayerRef.current = layer
 			setCount(pts.length)
@@ -529,7 +656,7 @@ export default function HeatMap({
 
 		if (dataLayer === "encampments" || dataLayer === "both") {
 			const pts = filterPoints(encampmentPoints, defaultYear, 0, undefined, df)
-			const layer = createHeatLayer(pts, ENCAMPMENT_GRADIENT)
+			const layer = createHeatLayer(pts, ENCAMPMENT_GRADIENT, map.getZoom())
 			layer.addTo(map)
 			encampmentHeatLayerRef.current = layer
 			setEncampmentCount(pts.length)
@@ -537,7 +664,7 @@ export default function HeatMap({
 
 		if (dataLayer === "waste") {
 			const pts = filterPoints(wastePoints, defaultYear, 0, wasteSource, df)
-			const layer = createHeatLayer(pts, WASTE_GRADIENT)
+			const layer = createHeatLayer(pts, WASTE_GRADIENT, map.getZoom())
 			layer.addTo(map)
 			wasteHeatLayerRef.current = layer
 			setWasteCount(pts.length)
@@ -572,7 +699,7 @@ export default function HeatMap({
 		if (dataLayer === "needles" || dataLayer === "both") {
 			if (heatLayerRef.current) map.removeLayer(heatLayerRef.current)
 			const pts = filterPoints(needlePoints, selYear, selMonth, undefined, df)
-			const layer = createHeatLayer(pts, NEEDLE_GRADIENT)
+			const layer = createHeatLayer(pts, NEEDLE_GRADIENT, map.getZoom())
 			layer.addTo(map)
 			heatLayerRef.current = layer
 			setCount(pts.length)
@@ -581,7 +708,7 @@ export default function HeatMap({
 		if (dataLayer === "encampments" || dataLayer === "both") {
 			if (encampmentHeatLayerRef.current) map.removeLayer(encampmentHeatLayerRef.current)
 			const pts = filterPoints(encampmentPoints, selYear, selMonth, undefined, df)
-			const layer = createHeatLayer(pts, ENCAMPMENT_GRADIENT)
+			const layer = createHeatLayer(pts, ENCAMPMENT_GRADIENT, map.getZoom())
 			layer.addTo(map)
 			encampmentHeatLayerRef.current = layer
 			setEncampmentCount(pts.length)
@@ -590,7 +717,7 @@ export default function HeatMap({
 		if (dataLayer === "waste") {
 			if (wasteHeatLayerRef.current) map.removeLayer(wasteHeatLayerRef.current)
 			const pts = filterPoints(wastePoints, selYear, selMonth, wasteSource, df)
-			const layer = createHeatLayer(pts, WASTE_GRADIENT)
+			const layer = createHeatLayer(pts, WASTE_GRADIENT, map.getZoom())
 			layer.addTo(map)
 			wasteHeatLayerRef.current = layer
 			setWasteCount(pts.length)
@@ -992,6 +1119,64 @@ export default function HeatMap({
 					</div>
 				)}
 			</div>
+
+			{/* Time scrubber */}
+			{timeline.length > 1 && (
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: 10,
+						marginTop: 12,
+						padding: "8px 12px",
+						background: "var(--color-surface, #fff)",
+						border: "1px solid var(--color-border, #e0e0e0)",
+						borderRadius: 8,
+						fontSize: 12,
+					}}
+				>
+					<button
+						type="button"
+						onClick={togglePlay}
+						aria-label={isPlaying ? "Pause animation" : "Play timeline animation"}
+						style={{
+							background: "none",
+							border: "1px solid #ccc",
+							borderRadius: 4,
+							padding: "3px 8px",
+							cursor: "pointer",
+							fontSize: 14,
+							lineHeight: 1,
+							color: isPlaying ? "#e85a1b" : "#555",
+							flexShrink: 0,
+						}}
+					>
+						{isPlaying ? "\u23F8" : "\u25B6"}
+					</button>
+					<input
+						type="range"
+						min={-1}
+						max={timeline.length - 1}
+						value={timelineIndex}
+						onChange={(e) => scrubTo(Number(e.target.value))}
+						style={{ flex: 1, accentColor: "#e85a1b", cursor: "pointer" }}
+						aria-label="Time scrubber"
+					/>
+					<span
+						style={{
+							minWidth: 85,
+							textAlign: "right",
+							color: "#444",
+							fontWeight: 600,
+							fontVariantNumeric: "tabular-nums",
+						}}
+					>
+						{timelineIndex < 0
+							? "All Time"
+							: `${MONTHS[(timeline[timelineIndex]?.month ?? 1) - 1]?.slice(0, 3)} ${timeline[timelineIndex]?.year}`}
+					</span>
+				</div>
+			)}
 		</section>
 	)
 }
@@ -1075,16 +1260,28 @@ function LayerRadio({
 	)
 }
 
-function createHeatLayer(pts: number[][], gradient: Record<number, string>): L.Layer {
+function getHeatParams(zoom: number): { radius: number; blur: number } {
+	// Scale radius/blur so points blend properly at all zoom levels
+	// At low zoom points overlap naturally; at high zoom they need larger radius
+	if (zoom <= 11) return { radius: 18, blur: 15 }
+	if (zoom <= 12) return { radius: 22, blur: 18 }
+	if (zoom <= 13) return { radius: 28, blur: 22 }
+	if (zoom <= 14) return { radius: 35, blur: 28 }
+	if (zoom <= 15) return { radius: 45, blur: 35 }
+	return { radius: 55, blur: 40 }
+}
+
+function createHeatLayer(pts: number[][], gradient: Record<number, string>, zoom = 13): L.Layer {
+	const { radius, blur } = getHeatParams(zoom)
 	return (
 		L as Record<string, unknown> as {
 			heatLayer: (pts: number[][], opts: Record<string, unknown>) => L.Layer
 		}
 	).heatLayer(pts, {
-		radius: 25,
-		blur: 20,
-		maxZoom: 16,
-		minOpacity: 0.1,
+		radius,
+		blur,
+		maxZoom: 17,
+		minOpacity: 0.05,
 		gradient,
 	})
 }
