@@ -91,6 +91,7 @@ export default function HourlyChart({ datasets }: HourlyChartProps) {
 					<button
 						key={t}
 						type="button"
+						aria-label={`Show ${t} hourly data`}
 						onClick={() => {
 							setActiveType(t)
 							setActiveYear("all")
@@ -117,6 +118,7 @@ export default function HourlyChart({ datasets }: HourlyChartProps) {
 			<div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "8px" }}>
 				<button
 					type="button"
+					aria-label="Show all years"
 					onClick={() => setActiveYear("all")}
 					style={{
 						padding: "2px 8px",
@@ -136,6 +138,7 @@ export default function HourlyChart({ datasets }: HourlyChartProps) {
 					<button
 						key={y}
 						type="button"
+						aria-label={`Show year ${y}`}
 						onClick={() => setActiveYear(String(y))}
 						style={{
 							padding: "2px 8px",

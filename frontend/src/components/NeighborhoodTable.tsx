@@ -61,6 +61,7 @@ export default function NeighborhoodTable({ datasets }: NeighborhoodTableProps) 
 					<button
 						key={t}
 						type="button"
+						aria-label={`Show ${t} neighborhood data`}
 						onClick={() => setActiveType(t)}
 						style={{
 							padding: "4px 12px",

@@ -13,7 +13,15 @@ const description =
 	"Three concrete proposals for fixing how Boston handles human waste reports through 311. Based on what San Francisco, Portland, and Albuquerque have already done."
 ---
 
-<BaseLayout title={title} description={description} canonical="https://www.urbanhazardmaps.com/fix">
+<BaseLayout title={title} description={description} canonical="https://www.urbanhazardmaps.com/fix" jsonLd={{
+	"@context": "https://schema.org",
+	"@type": "Article",
+	headline: "How to Fix Boston's 311 System for Human Waste",
+	description,
+	url: "https://www.urbanhazardmaps.com/fix",
+	author: { "@type": "Organization", name: "Urban Hazards" },
+	publisher: { "@type": "Organization", name: "Urban Hazards" },
+}}>
 	<Header generated={stats.generated} />
 
 	<main class="container" style="padding-top: 32px; padding-bottom: 48px;">

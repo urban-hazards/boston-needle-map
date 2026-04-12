@@ -16,6 +16,8 @@ export const GET: APIRoute = async () => {
 	const urls = [
 		`  <url><loc>${SITE}</loc></url>`,
 		`  <url><loc>${SITE}/methodology</loc></url>`,
+		`  <url><loc>${SITE}/data-quality</loc></url>`,
+		`  <url><loc>${SITE}/fix</loc></url>`,
 		...stats.hoods.map(
 			(h) => `  <url><loc>${SITE}/neighborhoods/${h.slug || slugify(h.name)}</loc></url>`,
 		),

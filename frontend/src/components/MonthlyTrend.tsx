@@ -189,10 +189,10 @@ export default function MonthlyTrend({ yearMonthly }: MonthlyTrendProps) {
 					Monthly Trend by Year
 				</div>
 				<div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-					<button type="button" onClick={showAll} style={btnStyle}>
+					<button type="button" aria-label="Show all years" onClick={showAll} style={btnStyle}>
 						Show all
 					</button>
-					<button type="button" onClick={hideAll} style={btnStyle}>
+					<button type="button" aria-label="Hide all years" onClick={hideAll} style={btnStyle}>
 						Clear
 					</button>
 				</div>

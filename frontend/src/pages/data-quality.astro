@@ -16,6 +16,15 @@ const rs = (wasteStats as unknown as Record<string, unknown>)?.routing_stats as
 	title="What Happens After You Report Human Waste in Boston — Boston Urban Hazard Maps"
 	description="You file a 311 report. The city closes it. The waste is still there. Here's what the data shows about how Boston handles — and loses — human waste complaints."
 	canonical="https://www.urbanhazardmaps.com/data-quality"
+	jsonLd={{
+		"@context": "https://schema.org",
+		"@type": "Article",
+		headline: "What Happens After You Report Human Waste in Boston",
+		description: "Data-driven analysis of how Boston's 311 system handles human waste reports — routing failures, silent closures, and missing data.",
+		url: "https://www.urbanhazardmaps.com/data-quality",
+		author: { "@type": "Organization", name: "Urban Hazards" },
+		publisher: { "@type": "Organization", name: "Urban Hazards" },
+	}}
 >
 	<Header generated={stats.generated} />
 
