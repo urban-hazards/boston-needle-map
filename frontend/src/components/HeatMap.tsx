@@ -311,6 +311,12 @@ export default function HeatMap({
 			const map = L.map(mapRef.current, { center: [42.332, -71.078], zoom: 13 })
 			mapInstance.current = map
 
+			// Custom panes so boundaries always render above heatmaps
+			const heatPane = map.createPane("heatmapPane")
+			heatPane.style.zIndex = "400"
+			const boundaryPane = map.createPane("boundaryPane")
+			boundaryPane.style.zIndex = "450"
+
 			L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
 				attribution:
 					'&copy; <a href="https://carto.com/">CARTO</a> &middot; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
@@ -563,6 +569,7 @@ export default function HeatMap({
 		}
 
 		boundaryLayerRef.current = L.geoJSON(geojson, {
+			pane: "boundaryPane",
 			style: (feature) => ({
 				color: feature?.properties?.selected ? "#e85a1b" : "#555",
 				weight: feature?.properties?.selected ? 2.5 : 1.5,
@@ -1283,5 +1290,6 @@ function createHeatLayer(pts: number[][], gradient: Record<number, string>, zoom
 		maxZoom: 17,
 		minOpacity: 0.05,
 		gradient,
+		pane: "heatmapPane",
 	})
 }
