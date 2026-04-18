@@ -1463,8 +1463,10 @@ function createHeatLayer(
 	method: HeatMethod = "tableau",
 ): L.Layer {
 	const params = getHeatParams(zoom, method)
-	// Intensity 1-100 scales radius (0.2x–2.5x)
-	const scale = 0.2 + (intensity / 100) * 2.3
+	// Intensity 1-100 scales radius exponentially (0.04x–0.2x). Most usable renders
+	// land in ~0.06x–0.13x, so slider middle hits that range; top-end caps well
+	// short of the map-covering zone.
+	const scale = 0.04 * 5 ** (intensity / 100)
 	return (
 		L as Record<string, unknown> as {
 			heatLayer: (pts: number[][], opts: Record<string, unknown>) => L.Layer

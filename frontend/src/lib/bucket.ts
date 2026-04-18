@@ -1,22 +1,26 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3"
 import type { MarkerData, PageStats } from "./types"
 
-const API_URL = process.env.API_URL || ""
-const USE_S3 = !!(process.env.ENDPOINT && process.env.BUCKET)
+// Astro dev loads .env into import.meta.env but not process.env. Railway
+// injects env vars as OS-level process.env. Check both so dev + prod both work.
+const env = (k: string): string => import.meta.env[k] ?? process.env[k] ?? ""
+
+const API_URL = env("API_URL")
+const ENDPOINT = env("ENDPOINT")
+const BUCKET = env("BUCKET")
+const USE_S3 = !!(ENDPOINT && BUCKET)
 
 const client = USE_S3
 	? new S3Client({
-			endpoint: process.env.ENDPOINT || undefined,
-			region: process.env.REGION || "us-east-1",
+			endpoint: ENDPOINT || undefined,
+			region: env("REGION") || "us-east-1",
 			credentials: {
-				accessKeyId: process.env.ACCESS_KEY_ID || "",
-				secretAccessKey: process.env.SECRET_ACCESS_KEY || "",
+				accessKeyId: env("ACCESS_KEY_ID"),
+				secretAccessKey: env("SECRET_ACCESS_KEY"),
 			},
 			forcePathStyle: true,
 		})
 	: null
-
-const BUCKET = process.env.BUCKET || ""
 
 const cache = new Map<string, { data: unknown; expires: number }>()
 const CACHE_TTL = 5 * 60 * 1000

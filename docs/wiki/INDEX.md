@@ -8,6 +8,7 @@
 - [Open311 API Reference](open311-api-reference.md) — endpoints, rate limits, auth, extensions, field inventory
 - [Service Code Mapping](service-code-mapping.md) — scraper slug→code table, input.* discovery, /services.json gaps
 - [Data Quality Issues](data-quality-issues.md) — 14 systemic problems with Boston's 311 open data feed
+- [Dev Setup & Deployment Gotchas](dev-setup.md) — dev-server env-loading trap, pipeline-deploy skip trap, local-run-is-prod-write warning
 
 ## Research (findings from analysis, evolves)
 
